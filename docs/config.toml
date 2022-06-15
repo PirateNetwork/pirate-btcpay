@@ -1,0 +1,15 @@
+languageCode = 'en-us'
+title = 'Pirate BTCPay Server'
+
+theme = 'hugo-theme-learn'
+
+[params]
+themeVariant = "blue"
+showVisitedLinks = true
+disableLandingPageButton = true
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
+
+[markup.goldmark.renderer]
+unsafe = true
