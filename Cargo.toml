@@ -1,0 +1,7 @@
+[workspace]
+members = [
+	'walletd',
+	'librustzcash/zcash_client_backend',
+	'librustzcash/zcash_primitives',
+	'librustzcash/zcash_proofs'
+]
