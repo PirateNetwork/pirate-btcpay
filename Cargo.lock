@@ -3191,6 +3191,7 @@ dependencies = [
  "log",
  "prost",
  "rocket",
+ "rusqlite",
  "serde",
  "serde_json",
  "thiserror",

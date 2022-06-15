@@ -1,10 +1,16 @@
 use std::path::Path;
+use rusqlite::Connection;
 use crate::Result;
 
-pub struct Db;
+pub struct Db {
+    connection: Connection,
+}
 
 impl Db {
     pub fn open(path: &Path) -> Result<Self> {
-        todo!()
+        let connection = Connection::open(path)?;
+        Ok(Db {
+            connection
+        })
     }
 }
