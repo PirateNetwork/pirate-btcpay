@@ -4,6 +4,7 @@ extern crate rocket;
 use anyhow::Context;
 use walletd::config::{AppConfig, CONFIG};
 use walletd::Result;
+use walletd::rpc::*;
 
 #[rocket::main]
 async fn main() -> Result<()> {
@@ -18,6 +19,15 @@ async fn main() -> Result<()> {
     let _ = rocket.mount(
         "/",
         routes![
+                create_account,
+                create_address,
+                get_accounts,
+                get_transaction,
+                get_transfers,
+                get_fee_estimate,
+                get_height,
+                sync_info,
+                request_scan,
             ])
         .launch()
         .await?;
