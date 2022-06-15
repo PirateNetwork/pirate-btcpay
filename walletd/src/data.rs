@@ -32,4 +32,3 @@ pub struct Transfer {
     pub r#type: String,
     pub unlock_time: u32,
 }
-

@@ -1,5 +1,5 @@
 use rocket::serde::json::Json;
-use crate::Error;
+use crate::{Error, scan_blocks};
 use crate::rpc::data::*;
 
 pub mod data;
@@ -54,10 +54,9 @@ pub async fn sync_info(_request: Json<SyncInfoRequest>) -> Result<Json<SyncInfoR
     todo!()
 }
 
-#[post("/request_scan", data = "<request>")]
-pub async fn request_scan(
-    request: Json<ScanRequest>,
-) -> Result<Json<ScanResponse>, Error> {
-    todo!()
+#[post("/request_scan")]
+pub async fn request_scan() -> Result<(), Error> {
+    scan_blocks().await?;
+    Ok(())
 }
 

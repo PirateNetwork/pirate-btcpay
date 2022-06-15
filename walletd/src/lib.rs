@@ -8,19 +8,30 @@ use thiserror::Error;
 use zcash_primitives::consensus::Network;
 use zcash_primitives::consensus::Network::MainNetwork;
 
+#[path = "generated/cash.z.wallet.sdk.rpc.rs"]
+pub mod lw_rpc;
+
 pub mod config;
 pub mod rpc;
 pub mod data;
 mod app;
 mod db;
+mod chain;
 
 pub const NETWORK: Network = MainNetwork;
-pub use app::{App, APP};
+pub use app::{App, APPSTORE, get_appstore};
+pub use chain::scan_blocks;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("Blockchain reorganization")]
+    ReorgDetected,
+
+    #[error(transparent)]
+    Tonic(#[from] tonic::Status),
+
     #[error(transparent)]
     SQL(#[from] rusqlite::Error),
 

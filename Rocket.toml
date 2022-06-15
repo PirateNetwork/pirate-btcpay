@@ -1,7 +1,8 @@
 [default]
 db_dir = "."
+starting_height = 1900000
 confirmations = 6
-lwd_url = "https://pirate.hanh.fun:9067"
+lwd_url = "http://localhost:9067"
 poll_interval = 10
 notify_host = "localhost"
 fvk = "zxviews1qvq0q4f5qqqqpqx9tl5w2c7jgvmzl0wcxqnuy9r20jde4j0q0mdpp669qpwkjw5z93ktenl0sj7q0kqnp7p7lms9unxychdg70s3j5fajhkw4f4qyac93hehzmfwyp2wzvqjnrm54qhqxeqfyfj7rau83qp67fwqgl7vgv9n8t2ysl3wmkfn5qavuz6sxdcaude7tmc7q5pvvnu6h9mst46x58uultupnm7wpch9qmnu8xaf8q5qdyjd4lmd236kjjhnj0nsdtqy6tccjkded"

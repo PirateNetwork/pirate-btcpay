@@ -28,6 +28,8 @@ prost = "0.7"
 
 rusqlite = "0.24.0"
 
+hex = "0.4.3"
+
 [dependencies.zcash_client_backend]
 path = "../librustzcash/zcash_client_backend"
 
