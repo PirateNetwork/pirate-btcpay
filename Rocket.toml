@@ -1,0 +1,12 @@
+[default]
+db_dir = "."
+confirmations = 6
+lwd_url = "https://pirate.hanh.fun:9067"
+poll_interval = 10
+notify_host = "localhost"
+
+[debug]
+address = "127.0.0.1"
+
+[release]
+address = "0.0.0.0"
