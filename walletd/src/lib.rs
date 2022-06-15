@@ -5,10 +5,17 @@ use rocket::{Request, response, Response};
 use rocket::http::Status;
 use rocket::response::Responder;
 use thiserror::Error;
+use zcash_primitives::consensus::Network;
+use zcash_primitives::consensus::Network::MainNetwork;
 
 pub mod config;
 pub mod rpc;
 pub mod data;
+mod app;
+mod db;
+
+pub const NETWORK: Network = MainNetwork;
+pub use app::{App, APP};
 
 pub type Result<T> = std::result::Result<T, Error>;
 

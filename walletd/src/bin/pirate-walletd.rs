@@ -2,8 +2,8 @@
 extern crate rocket;
 
 use anyhow::Context;
-use walletd::config::{AppConfig, CONFIG};
-use walletd::Result;
+use walletd::config::AppConfig;
+use walletd::{APP, App, Result};
 use walletd::rpc::*;
 
 #[rocket::main]
@@ -13,8 +13,9 @@ async fn main() -> Result<()> {
 
     let rocket = rocket::build();
     let app_config: AppConfig = rocket.figment().extract().context("Cannot parse config")?;
-    CONFIG.fill(app_config).unwrap();
-    log::info!("{:?}", CONFIG.borrow().unwrap());
+    let app = App::new(app_config);
+    let _ = APP.fill(app);
+    log::info!("{:?}", APP.borrow().unwrap().config);
 
     let _ = rocket.mount(
         "/",

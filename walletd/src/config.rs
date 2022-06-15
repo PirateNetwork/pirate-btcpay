@@ -1,10 +1,4 @@
-use lazy_static::lazy_static;
-use lazycell::AtomicLazyCell;
 use serde::{Serialize, Deserialize};
-
-lazy_static! {
-    pub static ref CONFIG: AtomicLazyCell<AppConfig> = AtomicLazyCell::new();
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AppConfig {
@@ -13,5 +7,6 @@ pub struct AppConfig {
     pub lwd_url: String,
     pub poll_interval: u32,
     pub notify_host: String,
+    pub fvk: String,
 }
 
