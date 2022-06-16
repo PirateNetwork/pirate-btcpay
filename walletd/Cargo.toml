@@ -18,6 +18,7 @@ serde = {version = "1.0.126", features = ["derive"]}
 serde_json = "1.0.64"
 lazy_static = "1.4.0"
 lazycell = "1.3.0"
+delegate = "0.7.0"
 
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
 tokio = { version = "^1.6", features = ["macros", "rt-multi-thread"] }

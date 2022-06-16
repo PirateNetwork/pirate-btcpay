@@ -1,14 +1,16 @@
 use rocket::serde::json::Json;
-use crate::{Error, scan_blocks};
+use crate::{Error, scan_blocks, wallet};
 use crate::rpc::data::*;
 
 pub mod data;
 
 #[post("/create_account", data = "<request>")]
-pub fn create_account(
+pub async fn create_account(
     request: Json<CreateAccountRequest>
 ) -> Result<Json<CreateAccountResponse>, Error> {
-    todo!()
+    let request = request.into_inner();
+    let response = wallet::Wallet::create_account(request.label).await?;
+    Ok(Json(response))
 }
 
 #[post("/create_address", data = "<request>")]

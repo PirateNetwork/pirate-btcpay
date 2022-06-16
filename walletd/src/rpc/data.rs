@@ -3,37 +3,37 @@ use crate::data::{AccountBalance, Transfer};
 
 #[derive(Deserialize)]
 pub struct CreateAccountRequest {
-    label: Option<String>,
+    pub label: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct CreateAccountResponse {
-    account_index: u32,
-    address: String,
+    pub account_index: u32,
+    pub address: String,
 }
 
 #[derive(Deserialize)]
 pub struct CreateAddressRequest {
-    account_index: u32,
-    label: Option<String>,
+    pub account_index: u32,
+    pub label: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct CreateAddressResponse {
-    address: String,
-    address_index: u32,
+    pub address: String,
+    pub address_index: u32,
 }
 
 #[derive(Deserialize)]
 pub struct GetAccountsRequest {
-    tag: Option<String>,
+    pub tag: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct GetAccountsResponse {
-    subaddress_accounts: Vec<AccountBalance>,
-    total_balance: u64,
-    total_unlocked_balance: u64,
+    pub subaddress_accounts: Vec<AccountBalance>,
+    pub total_balance: u64,
+    pub total_unlocked_balance: u64,
 }
 
 #[derive(Deserialize)]

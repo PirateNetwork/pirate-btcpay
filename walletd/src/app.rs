@@ -1,7 +1,6 @@
 use std::path::Path;
 use std::sync::Arc;
 use lazy_static::lazy_static;
-use zcash_primitives::sapling::keys::FullViewingKey;
 use lazycell::AtomicLazyCell;
 use tokio::sync::Mutex;
 use tonic::transport::Channel;

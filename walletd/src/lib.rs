@@ -17,6 +17,7 @@ pub mod data;
 mod app;
 mod db;
 mod chain;
+mod wallet;
 
 pub const NETWORK: Network = MainNetwork;
 pub use app::{App, APPSTORE, get_appstore};
