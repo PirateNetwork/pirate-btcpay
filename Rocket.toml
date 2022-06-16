@@ -1,11 +1,11 @@
 [default]
 db_dir = "."
-starting_height = 1900000
 confirmations = 6
 lwd_url = "http://localhost:9067"
 poll_interval = 10
 notify_host = "localhost"
-fvk = "zxviews1qvq0q4f5qqqqpqx9tl5w2c7jgvmzl0wcxqnuy9r20jde4j0q0mdpp669qpwkjw5z93ktenl0sj7q0kqnp7p7lms9unxychdg70s3j5fajhkw4f4qyac93hehzmfwyp2wzvqjnrm54qhqxeqfyfj7rau83qp67fwqgl7vgv9n8t2ysl3wmkfn5qavuz6sxdcaude7tmc7q5pvvnu6h9mst46x58uultupnm7wpch9qmnu8xaf8q5qdyjd4lmd236kjjhnj0nsdtqy6tccjkded"
+fvk = "zxviews1qw73xgmkqqqqpqx3f2a93lddczpdk4kt58dh5nceks7l8jhw6zc30up6ph3etllafdp5f90st33sa6p27jmevdelhx6fpmhk698vyu7lfn0z6gpqr3nfedhec5k9x0w826fej59j84xqkndqe0ymety9sgc4ttfn82gheu988d9dr9n99zege9egzadkwf8eeur3xm5tajctx625ux67w0dlsl8hsa4l889js800jq6xvcnyp3v0tnh65cqwq6xfnk9cqczue24wyyskv63ke"
+starting_height = 1915516
 
 [debug]
 address = "127.0.0.1"
