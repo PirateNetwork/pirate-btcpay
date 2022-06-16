@@ -9,7 +9,7 @@ use zcash_primitives::zip32::{DiversifierIndex, ExtendedFullViewingKey};
 use anyhow::{anyhow, Context};
 use crate::lw_rpc::BlockId;
 use crate::{NETWORK, Result};
-use crate::rpc::data::CreateAccountResponse;
+use crate::rpc::data::{CreateAccountResponse, CreateAddressResponse};
 
 pub struct Db {
     connection: Connection,
@@ -82,8 +82,25 @@ impl Db {
         Ok(account)
     }
 
+    pub async fn create_address(db: Arc<Mutex<Self>>, label: Option<String>, account_index: u32, fvk: &ExtendedFullViewingKey) -> Result<CreateAddressResponse> {
+        let label = label.unwrap_or("".to_string());
+        let db = db.lock().await;
+        let id_sub_account: u32 = db.connection.query_row(
+            "SELECT MAX(sub_account) FROM addresses WHERE account = ?1",
+            params![account_index],
+            |row| row.get(0),
+        )?;
+        let id_sub_account = id_sub_account + 1;
+        let (diversifier_index, address) = Self::next_diversifier(&db.connection, fvk)?;
+        db.connection.execute("INSERT INTO addresses(label, account, sub_account, address, diversifier_index) VALUES (?1,?2,?3,?4,?5)",
+                           params![label, account_index, id_sub_account, &address, diversifier_index as i64])?;
 
-
+        let sub_account = CreateAddressResponse {
+            address,
+            address_index: id_sub_account
+        };
+        Ok(sub_account)
+    }
     // Helpers
 
     fn next_diversifier(connection: &Connection, fvk: &ExtendedFullViewingKey) -> anyhow::Result<(u64, String)> {

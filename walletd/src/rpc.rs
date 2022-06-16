@@ -9,15 +9,17 @@ pub async fn create_account(
     request: Json<CreateAccountRequest>
 ) -> Result<Json<CreateAccountResponse>, Error> {
     let request = request.into_inner();
-    let response = wallet::Wallet::create_account(request.label).await?;
+    let response = wallet::create_account(request.label).await?;
     Ok(Json(response))
 }
 
 #[post("/create_address", data = "<request>")]
-pub fn create_address(
+pub async fn create_address(
     request: Json<CreateAddressRequest>,
 ) -> Result<Json<CreateAddressResponse>, Error> {
-    todo!()
+    let request = request.into_inner();
+    let response = wallet::create_address(request.label, request.account_index).await?;
+    Ok(Json(response))
 }
 
 #[post("/get_accounts", data = "<_request>")]
