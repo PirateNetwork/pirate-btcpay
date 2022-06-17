@@ -31,6 +31,9 @@ pub enum Error {
     ReorgDetected,
 
     #[error(transparent)]
+    Hex(#[from] hex::FromHexError),
+
+    #[error(transparent)]
     Tonic(#[from] tonic::Status),
 
     #[error(transparent)]

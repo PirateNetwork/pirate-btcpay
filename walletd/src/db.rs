@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use rusqlite::{Connection, NO_PARAMS, OptionalExtension, params};
+use rusqlite::{Connection, NO_PARAMS, OptionalExtension, params, Row};
 use zcash_client_backend::encoding::encode_payment_address;
 use zcash_primitives::consensus::Parameters;
 use zcash_primitives::sapling::keys::FullViewingKey;
@@ -8,7 +8,8 @@ use zcash_primitives::zip32::{DiversifierIndex, ExtendedFullViewingKey};
 use anyhow::{anyhow, Context};
 use crate::lw_rpc::BlockId;
 use crate::{NETWORK, Result};
-use crate::rpc::data::{CreateAccountResponse, CreateAddressResponse};
+use crate::data::{AccountBalance, SubAddress, Transfer};
+use crate::rpc::data::{CreateAccountResponse, CreateAddressResponse, GetTransactionByIdResponse};
 
 pub struct Db {
     connection: Connection,
@@ -110,6 +111,41 @@ impl Db {
         Ok(sub_account)
     }
 
+    pub fn get_accounts(db: Arc<Mutex<Self>>, height: u32, confirmations: u32) -> anyhow::Result<Vec<AccountBalance>> {
+        let db = db.lock().unwrap();
+        let confirmed_height = height - confirmations + 1;
+        let mut s = db.connection.prepare(
+            "WITH base AS (SELECT account, address FROM addresses WHERE sub_account = 0), \
+            balances AS (SELECT account, SUM(value) AS total from transactions t JOIN addresses a ON t.address = a.address GROUP BY a.account), \
+            unlocked_balances AS (SELECT account, SUM(value) AS unlocked from transactions t JOIN addresses a ON t.address = a.address WHERE height <= ?1 GROUP BY a.account) \
+            SELECT a.account, a.label, b.total, COALESCE(u.unlocked, 0) AS unlocked, base.address as base_address \
+            FROM addresses a JOIN balances b ON a.account = b.account LEFT JOIN unlocked_balances u ON u.account = a.account JOIN base ON base.account = a.account GROUP BY a.account")?;
+
+        let rows = s.query_map(params![confirmed_height], |row| {
+            let id_account: u32 = row.get(0)?;
+            let label: String = row.get(1)?;
+            let balance: i64 = row.get(2)?;
+            let unlocked: i64 = row.get(3)?;
+            let base_address: String = row.get(4)?;
+            Ok(AccountBalance {
+                account_index: id_account,
+                label,
+                balance: balance as u64,
+                unlocked_balance: unlocked as u64,
+                base_address,
+                tag: "".to_string(),
+            })
+        })?;
+
+        let mut sub_accounts: Vec<AccountBalance> = vec![];
+        for row in rows {
+            let sa = row?;
+            sub_accounts.push(sa);
+        }
+
+        Ok(sub_accounts)
+    }
+
     pub fn put_transaction(db: Arc<Mutex<Self>>, tx_hash: &[u8], address: &str, height: u32, value: u64) -> Result<()> {
         let db = db.lock().unwrap();
         db.connection.execute("INSERT INTO transactions(txid, height, address, value) VALUES (?1, ?2, ?3, ?4) ON CONFLICT (txid) DO NOTHING", params![tx_hash, height, address, value as i64])?;
@@ -120,6 +156,34 @@ impl Db {
         let db = db.lock().unwrap();
         db.connection.execute("INSERT INTO blocks(hash, height) VALUES (?1, ?2)", params![tx_hash, height])?;
         Ok(())
+    }
+
+    pub fn get_transaction(db: Arc<Mutex<Self>>, account_index: u32, txid: &[u8], latest_height: u32, confirmations: u32) -> Result<GetTransactionByIdResponse> {
+        let db = db.lock().unwrap();
+        let transfer = db.connection.query_row("SELECT t.address, value, sub_account, txid, height \
+        FROM transactions t JOIN addresses a ON t.address = a.address WHERE \
+        txid = ?1 AND a.account = ?2", params![txid, account_index], |row| Self::row_to_transfer(row, latest_height, account_index, confirmations))?;
+        let rep = GetTransactionByIdResponse {
+            transfer,
+            transfers: vec![]
+        };
+        Ok(rep)
+    }
+
+    pub fn get_transfers(db: Arc<Mutex<Self>>, latest_height: u32, account_index: u32, subaddr_indices: &[u32], confirmations: u32) -> Result<Vec<Transfer>> {
+        let db = db.lock().unwrap();
+        let mut s = db.connection.prepare("SELECT a.address, value, sub_account, txid, height \
+            FROM transactions t JOIN addresses a ON t.address = a.address WHERE \
+            account = ?1")?;
+        let rows = s.query_map(params![account_index], |row| Self::row_to_transfer(row, latest_height, account_index, confirmations))?;
+        let mut transfers: Vec<Transfer> = vec![];
+        for row in rows {
+            let row = row?;
+            if subaddr_indices.contains(&row.subaddr_index.minor) {
+                transfers.push(row);
+            }
+        }
+        Ok(transfers)
     }
 
     // Helpers
@@ -155,5 +219,30 @@ impl Db {
         ))
     }
 
-
+    fn row_to_transfer(row: &Row, latest_height: u32, account_index: u32, confirmations: u32) -> rusqlite::Result<Transfer> {
+        let address: String = row.get(0)?;
+        let value: i64 = row.get(1)?;
+        let sub_account: u32 = row.get(2)?;
+        let txid: Vec<u8> = row.get(3)?;
+        let height: u32 = row.get(4)?;
+        let t = Transfer {
+            address,
+            amount: value as u64,
+            confirmations: latest_height - height + 1,
+            height,
+            fee: 0,
+            note: String::new(),
+            payment_id: String::new(),
+            subaddr_index: SubAddress {
+                major: account_index,
+                minor: sub_account
+            },
+            suggested_confirmations_threshold: confirmations,
+            timestamp: 0,
+            txid: hex::encode(txid),
+            r#type: "in".to_string(),
+            unlock_time: 0
+        };
+        Ok(t)
+    }
 }

@@ -13,7 +13,7 @@ use zcash_primitives::transaction::components::sapling::CompactOutputDescription
 use zcash_primitives::zip32::ExtendedFullViewingKey;
 use crate::{Error, get_appstore, NETWORK, Result};
 use crate::db::Db;
-use crate::lw_rpc::{BlockId, BlockRange, ChainSpec};
+use crate::lw_rpc::{BlockId, BlockRange, ChainSpec, Empty};
 use crate::lw_rpc::compact_tx_streamer_client::CompactTxStreamerClient;
 use ff::PrimeField;
 use group::GroupEncoding;
@@ -107,6 +107,13 @@ async fn scan_blocks_inner(client: &mut CompactTxStreamerClient<Channel>, start_
         Db::put_block_height(app.store.clone(), &block.hash, block.height as u32)?;
     }
     Ok(())
+}
+
+pub async fn get_height() -> Result<u32> {
+    let app = get_appstore();
+    let mut client = app.lwd_client.lock().await;
+    let rep = client.get_lightd_info(Request::new(Empty {})).await?.into_inner();
+    Ok(rep.block_height as u32)
 }
 
 struct BlockInfo {

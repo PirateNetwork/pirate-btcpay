@@ -1,8 +1,9 @@
 use delegate::delegate;
 use rusqlite::params;
 use crate::{get_appstore, Result};
+use crate::data::Transfer;
 use crate::db::Db;
-use crate::rpc::data::{CreateAccountResponse, CreateAddressResponse};
+use crate::rpc::data::{CreateAccountResponse, CreateAddressResponse, GetTransactionByIdResponse};
 
 pub async fn create_account(label: Option<String>) -> Result<CreateAccountResponse> {
     let app = get_appstore();
@@ -15,3 +16,4 @@ pub async fn create_address(label: Option<String>, account_index: u32) -> Result
     let account = Db::create_address(app.store.clone(), label, account_index, &app.fvk);
     Ok(account.await?)
 }
+
