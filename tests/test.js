@@ -65,12 +65,12 @@ describe('pirate-btcpay', async function () {
             subaddr_indices: [0]
         })
         expect(rep).to.have.status(200)
+        delete(rep.body.in[0].confirmations)
         expect(rep.body).to.deep.equal({
             "in": [
                 {
                     "address": "zs1xflcmxuagwwn969htsej4mn3nuk7e3eeu3en4n4hkxajnqgmx5jsw0sa4p0r2ymqewf2ufefkfm",
                     "amount": 99500000,
-                    "confirmations": 31984,
                     "height": 1915516,
                     "fee": 0,
                     "note": "",
@@ -103,11 +103,11 @@ describe('pirate-btcpay', async function () {
             account_index: 0
         })
         expect(rep).to.have.status(200)
+        delete(rep.body.transfer.confirmations)
         expect(rep.body).to.deep.equal({
             "transfer": {
                 "address": "zs1xflcmxuagwwn969htsej4mn3nuk7e3eeu3en4n4hkxajnqgmx5jsw0sa4p0r2ymqewf2ufefkfm",
                 "amount": 99500000,
-                "confirmations": 31984,
                 "height": 1915516,
                 "fee": 0,
                 "note": "",
