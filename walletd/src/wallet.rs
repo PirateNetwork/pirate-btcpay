@@ -1,6 +1,5 @@
 use delegate::delegate;
 use rusqlite::params;
-use tokio::sync::MutexGuard;
 use crate::{get_appstore, Result};
 use crate::db::Db;
 use crate::rpc::data::{CreateAccountResponse, CreateAddressResponse};

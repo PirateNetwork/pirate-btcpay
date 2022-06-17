@@ -1,7 +1,6 @@
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use rusqlite::{Connection, NO_PARAMS, OptionalExtension, params};
-use tokio::sync::Mutex;
 use zcash_client_backend::encoding::encode_payment_address;
 use zcash_primitives::consensus::Parameters;
 use zcash_primitives::sapling::keys::FullViewingKey;
@@ -41,6 +40,15 @@ impl Db {
             diversifier_index INTEGER NOT NULL)",
             NO_PARAMS,
         )?;
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS transactions (
+            id_tx INTEGER PRIMARY KEY,
+            txid BLOB NOT NULL UNIQUE,
+            height INTEGER NOT NULL,
+            address TEXT NOT NULL,
+            value INTEGER NOT NULL)",
+            NO_PARAMS,
+        )?;
         Ok(())
     }
 
@@ -64,7 +72,7 @@ impl Db {
 
     pub async fn create_account(db: Arc<Mutex<Self>>, label: Option<String>, fvk: &ExtendedFullViewingKey) -> Result<CreateAccountResponse> {
         let label = label.unwrap_or("".to_string());
-        let db = db.lock().await;
+        let db = db.lock().unwrap();
         let id_account: Option<u32> =
             db.connection.query_row("SELECT MAX(account) FROM addresses", NO_PARAMS, |row| {
                 let id: Option<u32> = row.get(0)?;
@@ -84,7 +92,7 @@ impl Db {
 
     pub async fn create_address(db: Arc<Mutex<Self>>, label: Option<String>, account_index: u32, fvk: &ExtendedFullViewingKey) -> Result<CreateAddressResponse> {
         let label = label.unwrap_or("".to_string());
-        let db = db.lock().await;
+        let db = db.lock().unwrap();
         let id_sub_account: u32 = db.connection.query_row(
             "SELECT MAX(sub_account) FROM addresses WHERE account = ?1",
             params![account_index],
@@ -101,6 +109,19 @@ impl Db {
         };
         Ok(sub_account)
     }
+
+    pub fn put_transaction(db: Arc<Mutex<Self>>, tx_hash: &[u8], address: &str, height: u32, value: u64) -> Result<()> {
+        let db = db.lock().unwrap();
+        db.connection.execute("INSERT INTO transactions(txid, height, address, value) VALUES (?1, ?2, ?3, ?4) ON CONFLICT (txid) DO NOTHING", params![tx_hash, height, address, value as i64])?;
+        Ok(())
+    }
+
+    pub fn put_block_height(db: Arc<Mutex<Self>>, tx_hash: &[u8], height: u32) -> Result<()> {
+        let db = db.lock().unwrap();
+        db.connection.execute("INSERT INTO blocks(hash, height) VALUES (?1, ?2)", params![tx_hash, height])?;
+        Ok(())
+    }
+
     // Helpers
 
     fn next_diversifier(connection: &Connection, fvk: &ExtendedFullViewingKey) -> anyhow::Result<(u64, String)> {
@@ -133,4 +154,6 @@ impl Db {
             encode_payment_address(NETWORK.hrp_sapling_payment_address(), &pa),
         ))
     }
+
+
 }

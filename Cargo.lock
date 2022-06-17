@@ -3194,11 +3194,15 @@ name = "walletd"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bls12_381",
  "delegate",
  "dotenv",
  "env_logger",
+ "ff",
  "flexi_logger",
+ "group",
  "hex",
+ "jubjub",
  "lazy_static",
  "lazycell",
  "log",

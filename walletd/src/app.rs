@@ -1,8 +1,7 @@
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc};
 use lazy_static::lazy_static;
 use lazycell::AtomicLazyCell;
-use tokio::sync::Mutex;
 use tonic::transport::Channel;
 use zcash_client_backend::encoding::decode_extended_full_viewing_key;
 use zcash_primitives::consensus::Parameters;
@@ -17,8 +16,8 @@ lazy_static! {
 }
 
 pub struct App {
-    pub store: Arc<Mutex<Db>>,
-    pub lwd_client: Arc<Mutex<CompactTxStreamerClient<Channel>>>,
+    pub store: Arc<std::sync::Mutex<Db>>,
+    pub lwd_client: Arc<tokio::sync::Mutex<CompactTxStreamerClient<Channel>>>,
     pub fvk: ExtendedFullViewingKey,
     pub config: AppConfig,
 }
@@ -30,8 +29,8 @@ impl App {
         let fvk = decode_extended_full_viewing_key(NETWORK.hrp_sapling_extended_full_viewing_key(), &config.fvk).unwrap().unwrap();
         let lwd_client = CompactTxStreamerClient::connect(config.lwd_url.clone()).await.unwrap();
         App {
-            store: Arc::new(Mutex::new(db)),
-            lwd_client: Arc::new(Mutex::new(lwd_client)),
+            store: Arc::new(std::sync::Mutex::new(db)),
+            lwd_client: Arc::new(tokio::sync::Mutex::new(lwd_client)),
             fvk,
             config
         }

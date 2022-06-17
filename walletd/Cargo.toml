@@ -30,6 +30,10 @@ prost = "0.7"
 rusqlite = "0.24.0"
 
 hex = "0.4.3"
+bls12_381 = "^0.4.0"
+jubjub = "^0.6"
+ff = "^0.9"
+group = "0.9.0"
 
 [dependencies.zcash_client_backend]
 path = "../librustzcash/zcash_client_backend"
