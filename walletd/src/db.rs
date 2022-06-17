@@ -162,7 +162,8 @@ impl Db {
         let db = db.lock().unwrap();
         let transfer = db.connection.query_row("SELECT t.address, value, sub_account, txid, height \
         FROM transactions t JOIN addresses a ON t.address = a.address WHERE \
-        txid = ?1 AND a.account = ?2", params![txid, account_index], |row| Self::row_to_transfer(row, latest_height, account_index, confirmations))?;
+        txid = ?1 AND a.account = ?2", params![txid, account_index], |row| Self::row_to_transfer(row, latest_height, account_index, confirmations)).optional()?;
+        let transfer = transfer.ok_or(anyhow!("No such transaction"))?;
         let rep = GetTransactionByIdResponse {
             transfer,
             transfers: vec![]
@@ -223,7 +224,8 @@ impl Db {
         let address: String = row.get(0)?;
         let value: i64 = row.get(1)?;
         let sub_account: u32 = row.get(2)?;
-        let txid: Vec<u8> = row.get(3)?;
+        let mut txid: Vec<u8> = row.get(3)?;
+        txid.reverse();
         let height: u32 = row.get(4)?;
         let t = Transfer {
             address,

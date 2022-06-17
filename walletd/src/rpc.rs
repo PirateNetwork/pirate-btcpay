@@ -73,16 +73,16 @@ pub async fn get_transfers(
     Ok(Json(rep))
 }
 
-#[post("/get_fee_estimate", data = "<_request>")]
-pub fn get_fee_estimate(_request: Json<GetFeeEstimateRequest>) -> Result<Json<GetFeeEstimateResponse>, Error> {
+#[post("/get_fee_estimate")]
+pub fn get_fee_estimate() -> Result<Json<GetFeeEstimateResponse>, Error> {
     let rep = GetFeeEstimateResponse {
         fee: DEFAULT_FEE.into()
     };
     Ok(Json(rep))
 }
 
-#[post("/get_height", data = "<_request>")]
-pub async fn get_height(_request: Json<GetHeightRequest>) -> Result<Json<GetHeightResponse>, Error> {
+#[post("/get_height")]
+pub async fn get_height() -> Result<Json<GetHeightResponse>, Error> {
     let height = crate::chain::get_height().await?;
     let rep = GetHeightResponse {
         height,
@@ -90,8 +90,8 @@ pub async fn get_height(_request: Json<GetHeightRequest>) -> Result<Json<GetHeig
     Ok(Json(rep))
 }
 
-#[post("/sync_info", data = "<_request>")]
-pub async fn sync_info(_request: Json<SyncInfoRequest>) -> Result<Json<SyncInfoResponse>, Error> {
+#[post("/sync_info")]
+pub async fn sync_info() -> Result<Json<SyncInfoResponse>, Error> {
     let height = crate::chain::get_height().await?;
     let rep = SyncInfoResponse {
         target_height: height,

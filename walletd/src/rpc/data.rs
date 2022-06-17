@@ -60,24 +60,15 @@ pub struct GetTransfersResponse {
     pub r#in: Vec<Transfer>,
 }
 
-#[derive(Deserialize)]
-pub struct GetFeeEstimateRequest;
-
 #[derive(Serialize)]
 pub struct GetFeeEstimateResponse {
     pub fee: u64,
 }
 
-#[derive(Deserialize)]
-pub struct GetHeightRequest;
-
 #[derive(Serialize)]
 pub struct GetHeightResponse {
     pub height: u32,
 }
-
-#[derive(Deserialize)]
-pub struct SyncInfoRequest;
 
 #[derive(Serialize)]
 pub struct SyncInfoResponse {
