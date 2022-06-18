@@ -5,7 +5,7 @@
 <meta name=generator content="Hugo 0.91.2">
 <meta name=description content>
 <link rel=icon href=/pirate-btcpay/images/favicon.png type=image/png>
-<title>Categories :: Pirate BTCPay Server</title>
+<title>Usage :: Pirate BTCPay Server</title>
 <link href=/pirate-btcpay/css/nucleus.css?1655562048 rel=stylesheet>
 <link href=/pirate-btcpay/css/fontawesome-all.min.css?1655562048 rel=stylesheet>
 <link href=/pirate-btcpay/css/hybrid.css?1655562048 rel=stylesheet>
@@ -20,7 +20,7 @@
 <script src=/pirate-btcpay/js/jquery-3.3.1.min.js?1655562048></script>
 <style>:root #header+#content>#left>#rlblock_left{display:none!important}</style>
 </head>
-<body data-url=/pirate-btcpay/categories/>
+<body data-url=/pirate-btcpay/installation/usage/>
 <nav id=sidebar class=showVisitedLinks>
 <div id=header-wrapper>
 <div id=header>
@@ -40,7 +40,8 @@
 </div>
 <div class=highlightable>
 <ul class=topics>
-<li data-nav-id=/pirate-btcpay/installation/ title=Installation class=dd-item>
+<li data-nav-id=/pirate-btcpay/installation/ title=Installation class="dd-item
+parent">
 <a href=/pirate-btcpay/installation/>
 <b>1. </b>Installation
 <i class="fas fa-check read-icon"></i>
@@ -58,7 +59,7 @@ Build
 <i class="fas fa-check read-icon"></i>
 </a>
 </li>
-<li data-nav-id=/pirate-btcpay/installation/usage/ title=Usage class=dd-item>
+<li data-nav-id=/pirate-btcpay/installation/usage/ title=Usage class="dd-item active">
 <a href=/pirate-btcpay/installation/usage/>
 Usage
 <i class="fas fa-check read-icon"></i>
@@ -123,11 +124,17 @@ Payment
 </span>
 <span id=toc-menu><i class="fas fa-list-alt"></i></span>
 <span class=links>
-<a href=/pirate-btcpay/>BTCPay Server</a> > Categories
+<a href=/pirate-btcpay/>BTCPay Server</a> > <a href=/pirate-btcpay/installation/>Installation</a> > Usage
 </span>
 </div>
 <div class=progress>
 <div class=wrapper>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#configuration>Configuration</a></li>
+<li><a href=#wallet-configuration>Wallet Configuration</a></li>
+</ul>
+</nav>
 </div>
 </div>
 </div>
@@ -136,17 +143,48 @@ Payment
 </div>
 <div id=body-inner>
 <h1>
-category ::
-Categories
+Usage
 </h1>
+<p><code>walletd</code> is meant to be used with BTCPayserver. However, it is a standalone
+server that answers to REST RPC.</p>
+<h2 id=configuration>Configuration</h2>
+<p>The configuratio is in <code>Rocket.toml</code></p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-toml data-lang=toml>[<span style=color:#a6e22e>default</span>]
+<span style=color:#a6e22e>db_dir</span> = <span style=color:#e6db74>&#34;.&#34;</span>
+<span style=color:#a6e22e>confirmations</span> = <span style=color:#ae81ff>6</span>
+<span style=color:#a6e22e>lwd_url</span> = <span style=color:#e6db74>&#34;http://localhost:9067&#34;</span>
+<span style=color:#a6e22e>poll_interval</span> = <span style=color:#ae81ff>10</span>
+<span style=color:#a6e22e>notify_host</span> = <span style=color:#e6db74>&#34;localhost&#34;</span>
+<span style=color:#a6e22e>fvk</span> = <span style=color:#e6db74>&#34;zxviews1qw73xgmkqqqqpqx3f2a93lddczpdk4kt58dh5nceks7l8jhw6zc30up6ph3etllafdp5f90st33sa6p27jmevdelhx6fpmhk698vyu7lfn0z6gpqr3nfedhec5k9x0w826fej59j84xqkndqe0ymety9sgc4ttfn82gheu988d9dr9n99zege9egzadkwf8eeur3xm5tajctx625ux67w0dlsl8hsa4l889js800jq6xvcnyp3v0tnh65cqwq6xfnk9cqczue24wyyskv63ke&#34;</span>
+<span style=color:#a6e22e>starting_height</span> = <span style=color:#ae81ff>1915516</span>
+
+[<span style=color:#a6e22e>debug</span>]
+<span style=color:#a6e22e>address</span> = <span style=color:#e6db74>&#34;127.0.0.1&#34;</span>
+
+[<span style=color:#a6e22e>release</span>]
+<span style=color:#a6e22e>address</span> = <span style=color:#e6db74>&#34;0.0.0.0&#34;</span>
+</code></pre></div><p>The default section applies to both profile. The debug section is for debug builds and the release profile is for the
+release build.</p>
 <ul>
+<li><code>db_dir</code>: Location of the database directory where the <code>wallet.db</code> file is created.</li>
+<li><code>confirmations</code>: The number of block confirmations needed for a payment to be unlocked</li>
+<li><code>lwd_url</code>: URL of the <code>lightwalletd</code> server</li>
+<li><code>poll_interval</code>: Frequency at which the wallet will check new blocks</li>
+<li><code>notify_host</code>: Hostname of the BTCPayserver. <code>walletd</code> calls back BTCPayserver when it detects an incoming payment.</li>
+<li><code>fvk</code>: The wallet Extended Full Viewing Key</li>
+<li><code>starting_height</code>: The birth height of the wallet, i.e. no transactions occurred before that height.</li>
+<li><code>address</code>: Listening address</li>
 </ul>
+<h2 id=wallet-configuration>Wallet Configuration</h2>
+<div class="notices warning"><p>At a minimum, you will need to change <code>fvk</code> and <code>starting_height</code>.</p>
+</div>
 <footer class=footline>
 </footer>
 </div>
 </div>
 <div id=navigation>
-<a class="nav nav-next" href=/pirate-btcpay/installation/ title=Installation style=margin-right:0><i class="fa fa-chevron-right"></i></a>
+<a class="nav nav-prev" href=/pirate-btcpay/installation/build/ title=Build> <i class="fa fa-chevron-left"></i></a>
+<a class="nav nav-next" href=/pirate-btcpay/api/ title=API style=margin-right:0><i class="fa fa-chevron-right"></i></a>
 </div>
 </section>
 <div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px>
