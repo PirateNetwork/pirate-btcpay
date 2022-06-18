@@ -1,6 +1,6 @@
 ---
 title: Requirements
-date: 2022-06-15T17:10:00+08:00
+weight: 10
 ---
 
 ## Pirated & Lightwalletd
@@ -16,3 +16,7 @@ We will call this the `LWD_URL` in the rest of the documentation.
 ./pirated
 ./lightwalletd --pirate-conf-path ~/.komodo/PIRATE/PIRATE.conf --no-tls-very-insecure --data-dir .  --log-file /dev/stdout
 ```
+
+## Rust
+
+You need to install [Rust](https://www.rust-lang.org/).
