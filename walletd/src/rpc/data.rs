@@ -24,11 +24,6 @@ pub struct CreateAddressResponse {
     pub address_index: u32,
 }
 
-#[derive(Deserialize)]
-pub struct GetAccountsRequest {
-    pub tag: Option<String>,
-}
-
 #[derive(Serialize)]
 pub struct GetAccountsResponse {
     pub subaddress_accounts: Vec<AccountBalance>,
@@ -61,18 +56,26 @@ pub struct GetTransfersResponse {
 }
 
 #[derive(Serialize)]
-pub struct GetFeeEstimateResponse {
-    pub fee: u64,
-}
-
-#[derive(Serialize)]
 pub struct GetHeightResponse {
     pub height: u32,
 }
 
+#[derive(Deserialize)]
+pub struct MakeURIRequest {
+    pub address: String,
+    pub amount: u64,
+    pub payment_id: String,
+    pub tx_description: String,
+    pub recipient_name: String,
+}
+
+#[derive(Serialize)]
+pub struct MakeURIResponse {
+    pub uri: String,
+}
+
 #[derive(Serialize)]
 pub struct SyncInfoResponse {
-    pub target_height: u32,
     pub height: u32,
 }
 

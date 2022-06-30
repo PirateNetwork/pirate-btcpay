@@ -26,9 +26,8 @@ pub async fn create_address(
     Ok(Json(response))
 }
 
-#[post("/get_accounts", data = "<_request>")]
+#[post("/get_accounts")]
 pub async fn get_accounts(
-    _request: Json<GetAccountsRequest>,
 ) -> Result<Json<GetAccountsResponse>, Error> {
     let app = get_appstore();
     let height = crate::chain::get_height().await?;
@@ -73,14 +72,6 @@ pub async fn get_transfers(
     Ok(Json(rep))
 }
 
-#[post("/get_fee_estimate")]
-pub fn get_fee_estimate() -> Result<Json<GetFeeEstimateResponse>, Error> {
-    let rep = GetFeeEstimateResponse {
-        fee: DEFAULT_FEE.into()
-    };
-    Ok(Json(rep))
-}
-
 #[post("/get_height")]
 pub async fn get_height() -> Result<Json<GetHeightResponse>, Error> {
     let height = crate::chain::get_height().await?;
@@ -90,11 +81,25 @@ pub async fn get_height() -> Result<Json<GetHeightResponse>, Error> {
     Ok(Json(rep))
 }
 
+#[post("/make_uri", data = "<request>")]
+pub async fn make_uri(request: Json<MakeURIRequest>) -> Result<Json<MakeURIResponse>, Error> {
+    let uri = crate::wallet::make_uri(
+        &request.address,
+        request.amount,
+        &request.payment_id,
+        &request.tx_description,
+        &request.recipient_name
+    )?;
+    let rep = MakeURIResponse {
+        uri,
+    };
+    Ok(Json(rep))
+}
+
 #[post("/sync_info")]
 pub async fn sync_info() -> Result<Json<SyncInfoResponse>, Error> {
     let height = crate::chain::get_height().await?;
     let rep = SyncInfoResponse {
-        target_height: height,
         height, // Pirate lightwalletd does not return estimate height
     };
     Ok(Json(rep))

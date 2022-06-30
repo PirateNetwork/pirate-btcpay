@@ -25,9 +25,9 @@ async fn main() -> Result<()> {
                 get_accounts,
                 get_transaction,
                 get_transfers,
-                get_fee_estimate,
                 get_height,
                 sync_info,
+                make_uri,
                 request_scan,
             ])
         .launch()
