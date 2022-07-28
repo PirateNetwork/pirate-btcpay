@@ -6,4 +6,4 @@
 	url = https://github.com/matcornic/hugo-theme-learn.git
 [submodule "btcpayserver"]
 	path = btcpayserver
-	url = git@github.com:hhanh01/btcpayserver.git
+	url = https://github.com/hhanh01/btcpayserver.git
