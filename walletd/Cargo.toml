@@ -26,6 +26,7 @@ tokio-stream = "0.1.7"
 
 tonic = { version = "0.4.3", features = ["tls", "tls-roots"] }
 prost = "0.7"
+reqwest = "0.11"
 
 rusqlite = "0.24.0"
 

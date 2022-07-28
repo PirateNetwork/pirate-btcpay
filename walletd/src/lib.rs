@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 #[macro_use]
 extern crate rocket;
 
@@ -41,6 +42,9 @@ pub enum Error {
 
     #[error(transparent)]
     Rocket(#[from] rocket::Error),
+
+    #[error(transparent)]
+    Reqwest(#[from] reqwest::Error),
 
     #[error(transparent)]
     Other(#[from] anyhow::Error)

@@ -17,9 +17,16 @@ use crate::lw_rpc::{BlockId, BlockRange, ChainSpec, Empty};
 use crate::lw_rpc::compact_tx_streamer_client::CompactTxStreamerClient;
 use ff::PrimeField;
 use group::GroupEncoding;
-use tokio::sync::MutexGuard;
+use lazy_static::lazy_static;
+use tokio::sync::{Semaphore, MutexGuard};
+use crate::rpc::notify_transaction;
 
-pub async fn scan_blocks() -> Result<()> {
+lazy_static! {
+    static ref SYNC_LOCK: Semaphore = Semaphore::new(1);
+}
+
+pub async fn scan_blocks(notify_url: &str) -> Result<()> {
+    let _permit = SYNC_LOCK.acquire().await.map_err(|_| anyhow!("SyncLock Error"))?;
     let app = get_appstore();
     let starting_height = app.config.starting_height as u64;
     let mut client = app.lwd_client.lock().await;
@@ -30,7 +37,7 @@ pub async fn scan_blocks() -> Result<()> {
             let store = app.store.lock().unwrap();
             store.get_last_synced()?
         };
-        match scan_blocks_inner(&mut client, block_id.as_ref(), starting_height, &app.fvk).await {
+        match scan_blocks_inner(&mut client, block_id.as_ref(), starting_height, &app.fvk, notify_url).await {
             Ok(_) => {
                 log::info!("Scan Completed");
                 return Ok(())
@@ -49,7 +56,8 @@ pub async fn scan_blocks() -> Result<()> {
     Err(anyhow!("Block scanning failed").into())
 }
 
-async fn scan_blocks_inner(client: &mut CompactTxStreamerClient<Channel>, start_block: Option<&BlockId>, starting_height: u64, fvk: &ExtendedFullViewingKey) -> Result<()> {
+async fn scan_blocks_inner(client: &mut CompactTxStreamerClient<Channel>, start_block: Option<&BlockId>, starting_height: u64, fvk: &ExtendedFullViewingKey,
+                           notify_url: &str) -> Result<()> {
     let app = get_appstore();
     let latest_height = client.get_latest_block(Request::new(ChainSpec {})).await?.into_inner().height;
     let height = start_block.map(|b| b.height + 1).unwrap_or(starting_height);
@@ -95,6 +103,12 @@ async fn scan_blocks_inner(client: &mut CompactTxStreamerClient<Channel>, start_
             }
             if let Some(address) = address {
                 Db::put_transaction(app.store.clone(), &transaction.hash, &address, block.height as u32, value)?;
+                let mut tx_id = transaction.hash.to_vec();
+                tx_id.reverse();
+                let res = notify_transaction(&hex::encode(&tx_id), notify_url).await;
+                if let Err(e) = res {
+                    log::warn!("Failed to notify new tx: {}", e.to_string());
+                }
             }
         }
         last_block = Some(BlockInfo {

@@ -1,3 +1,4 @@
+use std::time::Duration;
 use rocket::serde::json::Json;
 use tonic::Request;
 use zcash_primitives::transaction::components::amount::DEFAULT_FEE;
@@ -81,21 +82,6 @@ pub async fn get_height() -> Result<Json<GetHeightResponse>, Error> {
     Ok(Json(rep))
 }
 
-#[post("/make_uri", data = "<request>")]
-pub async fn make_uri(request: Json<MakeURIRequest>) -> Result<Json<MakeURIResponse>, Error> {
-    let uri = crate::wallet::make_uri(
-        &request.address,
-        request.amount,
-        &request.payment_id,
-        &request.tx_description,
-        &request.recipient_name
-    )?;
-    let rep = MakeURIResponse {
-        uri,
-    };
-    Ok(Json(rep))
-}
-
 #[post("/sync_info")]
 pub async fn sync_info() -> Result<Json<SyncInfoResponse>, Error> {
     let height = crate::chain::get_height().await?;
@@ -107,7 +93,28 @@ pub async fn sync_info() -> Result<Json<SyncInfoResponse>, Error> {
 
 #[post("/request_scan")]
 pub async fn request_scan() -> Result<(), Error> {
-    scan_blocks().await?;
+    let app = get_appstore();
+    let notify_url = app.config.notify_host.clone();
+    scan_blocks(&notify_url).await?;
     Ok(())
 }
 
+pub async fn notify_transaction(tx_id: &str, notify_url: &str) -> Result<(), Error> {
+    let uri = format!("{}/piratelikedaemoncallback/tx?cryptoCode=arrr&hash={}", notify_url, tx_id);
+    log::info!("notify {}", uri);
+    let rep = reqwest::Client::builder().build().unwrap().get(uri).send().await?;
+    log::info!("{:?}", rep);
+    Ok(())
+}
+
+pub fn monitor_task(poll_interval: u32) {
+    let app = get_appstore();
+    let notify_url = app.config.notify_host.clone();
+    tokio::spawn(async move {
+        loop {
+            scan_blocks(&notify_url).await?;
+            tokio::time::sleep(Duration::from_secs(poll_interval as u64)).await;
+        }
+        Ok::<_, anyhow::Error>(())
+    });
+}

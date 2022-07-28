@@ -13,9 +13,12 @@ async fn main() -> Result<()> {
 
     let rocket = rocket::build();
     let app_config: AppConfig = rocket.figment().extract().context("Cannot parse config")?;
+    let poll_interval = app_config.poll_interval;
     let app = App::new(app_config).await;
     let _ = APPSTORE.fill(app);
     log::info!("{:?}", get_appstore().config);
+
+    monitor_task(poll_interval);
 
     let _ = rocket.mount(
         "/",
@@ -27,7 +30,6 @@ async fn main() -> Result<()> {
                 get_transfers,
                 get_height,
                 sync_info,
-                make_uri,
                 request_scan,
             ])
         .launch()

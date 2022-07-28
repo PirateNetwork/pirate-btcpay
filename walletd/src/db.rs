@@ -165,8 +165,10 @@ impl Db {
         txid = ?1 AND a.account = ?2", params![txid, account_index], |row| Self::row_to_transfer(row, latest_height, account_index, confirmations)).optional()?;
         let transfer = transfer.ok_or(anyhow!("No such transaction"))?;
         let rep = GetTransactionByIdResponse {
-            transfer,
-            transfers: vec![]
+            transfer: transfer.clone(),
+            transfers: vec![
+                transfer
+            ]
         };
         Ok(rep)
     }
