@@ -1,0 +1,25 @@
+#syntax=docker/dockerfile:1.2
+FROM ubuntu:jammy as dev
+
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
+RUN apt-get install -yq curl gnupg2
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+RUN apt-get update
+RUN apt-get install -yq unzip xz-utils clang cmake git pkg-config libssl-dev
+
+#syntax=docker/dockerfile:1.2
+FROM dev as builder
+
+ENV PATH $PATH:/root/.cargo/bin
+
+COPY . /walletd
+
+RUN cd /walletd && cargo b -r
+
+FROM ubuntu:jammy
+WORKDIR /root
+COPY --from=builder /walletd/target/release/walletd ./
+COPY --from=builder /walletd/Rocket.toml ./
+

@@ -115,6 +115,7 @@ pub fn monitor_task(poll_interval: u32) {
             scan_blocks(&notify_url).await?;
             tokio::time::sleep(Duration::from_secs(poll_interval as u64)).await;
         }
+        #[allow(unreachable_code)]
         Ok::<_, anyhow::Error>(())
     });
 }

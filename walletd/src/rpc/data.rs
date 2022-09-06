@@ -81,6 +81,7 @@ pub struct SyncInfoResponse {
 
 #[derive(Deserialize)]
 pub struct ScanRequest {
+    #[allow(dead_code)]
     start_height: Option<u32>,
 }
 
