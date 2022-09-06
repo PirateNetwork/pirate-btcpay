@@ -13,7 +13,7 @@ Requirements: Docker
 Tested on Linux
 
 1. Download the `docker-compose.yml` for this project
-2. Edit BTCPAYSERVER_starting_height and BTCPAYSERVER_fvk. They
+2. **Edit BTCPAYSERVER_starting_height and BTCPAYSERVER_fvk**. They
 should set to your receiving wallet birth height and full viewing key.
 3. Launch the server
 
