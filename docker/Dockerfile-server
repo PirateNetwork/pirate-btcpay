@@ -1,0 +1,21 @@
+FROM mcr.microsoft.com/dotnet/sdk:6.0.101-bullseye-slim AS builder
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+WORKDIR /root
+
+COPY /btcpayserver /btcpayserver
+RUN cd /btcpayserver/BTCPayServer && dotnet restore
+ARG CONFIGURATION_NAME=Release
+RUN cd /btcpayserver/BTCPayServer && dotnet publish --output /app/ -c Altcoins-Release
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.1-bullseye-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends iproute2 openssh-client
+
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
+
+WORKDIR /app
+ENV BTCPAY_DATADIR=/datadir
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+COPY --from=builder "/app" .
