@@ -53,6 +53,13 @@ impl Db {
         Ok(())
     }
 
+    pub fn is_new(&self) -> Result<bool> {
+        let r = self.connection
+            .query_row("SELECT 1 FROM addresses", NO_PARAMS, |r| r.get::<_, u32>(0)).optional()?;
+
+        Ok(r.is_none())
+    }
+
     pub fn get_last_synced(&self) -> Result<Option<BlockId>> {
         let block_id = self.connection.query_row("SELECT hash, height FROM blocks WHERE height = (SELECT MAX(height) FROM blocks)",
         NO_PARAMS, |row| {
