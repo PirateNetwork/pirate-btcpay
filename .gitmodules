@@ -7,3 +7,6 @@
 [submodule "btcpayserver"]
 	path = btcpayserver
 	url = https://github.com/hhanh01/btcpayserver.git
+[submodule "btcpayserver-docker"]
+	path = btcpayserver-docker
+	url = git@github.com:hhanh01/btcpayserver-docker.git
