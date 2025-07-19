@@ -6,7 +6,7 @@
 	url = https://github.com/matcornic/hugo-theme-learn.git
 [submodule "btcpayserver"]
 	path = btcpayserver
-	url = https://github.com/hhanh01/btcpayserver.git
+	url = https://github.com/PirateNetwork/btcpayserver.git
 [submodule "btcpayserver-docker"]
 	path = btcpayserver-docker
-	url = git@github.com:hhanh01/btcpayserver-docker.git
+	url = https://github.com/PirateNetwork/btcpayserver-docker.git

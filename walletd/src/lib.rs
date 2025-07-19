@@ -9,7 +9,7 @@ use thiserror::Error;
 use zcash_primitives::consensus::Network;
 use zcash_primitives::consensus::Network::MainNetwork;
 
-#[path = "generated/cash.z.wallet.sdk.rpc.rs"]
+#[path = "generated/pirate.wallet.sdk.rpc.rs"]
 pub mod lw_rpc;
 
 pub mod config;

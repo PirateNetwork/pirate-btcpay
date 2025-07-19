@@ -341,7 +341,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetLatestBlock",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetLatestBlock",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -358,7 +358,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetBlock",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetBlock",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -376,7 +376,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetBlockRange",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetBlockRange",
             );
             self.inner
                 .server_streaming(request.into_request(), path, codec)
@@ -395,7 +395,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetZECPrice",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetZECPrice",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -411,7 +411,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetCurrentZECPrice",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetCurrentZECPrice",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -428,7 +428,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTransaction",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTransaction",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -445,7 +445,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/SendTransaction",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/SendTransaction",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -463,7 +463,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTaddressTxids",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTaddressTxids",
             );
             self.inner
                 .server_streaming(request.into_request(), path, codec)
@@ -483,7 +483,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetAddressTxids",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetAddressTxids",
             );
             self.inner
                 .server_streaming(request.into_request(), path, codec)
@@ -501,7 +501,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalance",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalance",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -517,7 +517,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalanceStream",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalanceStream",
             );
             self.inner
                 .client_streaming(request.into_streaming_request(), path, codec)
@@ -545,7 +545,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetMempoolTx",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetMempoolTx",
             );
             self.inner
                 .server_streaming(request.into_request(), path, codec)
@@ -567,7 +567,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTreeState",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTreeState",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -583,7 +583,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxos",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxos",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -602,7 +602,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxosStream",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxosStream",
             );
             self.inner
                 .server_streaming(request.into_request(), path, codec)
@@ -621,7 +621,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetLightdInfo",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetLightdInfo",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -638,7 +638,7 @@ pub mod compact_tx_streamer_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/Ping",
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/Ping",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -812,7 +812,7 @@ pub mod compact_tx_streamer_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetLatestBlock" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetLatestBlock" => {
                     #[allow(non_camel_case_types)]
                     struct GetLatestBlockSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::ChainSpec> for GetLatestBlockSvc<T> {
@@ -843,7 +843,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetBlock" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetBlock" => {
                     #[allow(non_camel_case_types)]
                     struct GetBlockSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::BlockId> for GetBlockSvc<T> {
@@ -874,7 +874,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetBlockRange" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetBlockRange" => {
                     #[allow(non_camel_case_types)]
                     struct GetBlockRangeSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer>
@@ -910,7 +910,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetZECPrice" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetZECPrice" => {
                     #[allow(non_camel_case_types)]
                     struct GetZECPriceSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::PriceRequest> for GetZECPriceSvc<T> {
@@ -941,7 +941,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetCurrentZECPrice" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetCurrentZECPrice" => {
                     #[allow(non_camel_case_types)]
                     struct GetCurrentZECPriceSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::Empty> for GetCurrentZECPriceSvc<T> {
@@ -969,7 +969,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTransaction" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTransaction" => {
                     #[allow(non_camel_case_types)]
                     struct GetTransactionSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::TxFilter> for GetTransactionSvc<T> {
@@ -1000,7 +1000,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/SendTransaction" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/SendTransaction" => {
                     #[allow(non_camel_case_types)]
                     struct SendTransactionSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::RawTransaction>
@@ -1033,7 +1033,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTaddressTxids" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTaddressTxids" => {
                     #[allow(non_camel_case_types)]
                     struct GetTaddressTxidsSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer>
@@ -1069,7 +1069,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetAddressTxids" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetAddressTxids" => {
                     #[allow(non_camel_case_types)]
                     struct GetAddressTxidsSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer>
@@ -1105,7 +1105,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalance" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalance" => {
                     #[allow(non_camel_case_types)]
                     struct GetTaddressBalanceSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::AddressList>
@@ -1138,7 +1138,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalanceStream" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTaddressBalanceStream" => {
                     #[allow(non_camel_case_types)]
                     struct GetTaddressBalanceStreamSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::ClientStreamingService<super::Address>
@@ -1172,7 +1172,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetMempoolTx" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetMempoolTx" => {
                     #[allow(non_camel_case_types)]
                     struct GetMempoolTxSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::ServerStreamingService<super::Exclude>
@@ -1207,7 +1207,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTreeState" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetTreeState" => {
                     #[allow(non_camel_case_types)]
                     struct GetTreeStateSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::BlockId> for GetTreeStateSvc<T> {
@@ -1238,7 +1238,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxos" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxos" => {
                     #[allow(non_camel_case_types)]
                     struct GetAddressUtxosSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer>
@@ -1272,7 +1272,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxosStream" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetAddressUtxosStream" => {
                     #[allow(non_camel_case_types)]
                     struct GetAddressUtxosStreamSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer>
@@ -1309,7 +1309,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetLightdInfo" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/GetLightdInfo" => {
                     #[allow(non_camel_case_types)]
                     struct GetLightdInfoSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::Empty> for GetLightdInfoSvc<T> {
@@ -1337,7 +1337,7 @@ pub mod compact_tx_streamer_server {
                     };
                     Box::pin(fut)
                 }
-                "/cash.z.wallet.sdk.rpc.CompactTxStreamer/Ping" => {
+                "/pirate.wallet.sdk.rpc.CompactTxStreamer/Ping" => {
                     #[allow(non_camel_case_types)]
                     struct PingSvc<T: CompactTxStreamer>(pub Arc<T>);
                     impl<T: CompactTxStreamer> tonic::server::UnaryService<super::Duration> for PingSvc<T> {
@@ -1396,6 +1396,6 @@ pub mod compact_tx_streamer_server {
         }
     }
     impl<T: CompactTxStreamer> tonic::transport::NamedService for CompactTxStreamerServer<T> {
-        const NAME: &'static str = "cash.z.wallet.sdk.rpc.CompactTxStreamer";
+        const NAME: &'static str = "pirate.wallet.sdk.rpc.CompactTxStreamer";
     }
 }
