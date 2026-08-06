@@ -10,4 +10,3 @@
 [submodule "pirate-unified-wallet"]
 	path = pirate-unified-wallet
 	url = https://github.com/PirateNetwork/Pirate-Unified-Light-Wallet
-	branch = dev-ironwood
