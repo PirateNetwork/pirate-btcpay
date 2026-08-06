@@ -1,0 +1,22 @@
+[package]
+name = "pirate-btcpay-walletd"
+version = "0.2.0"
+edition = "2021"
+
+[[bin]]
+name = "pirate-btcpay-walletd"
+path = "src/main.rs"
+
+[dependencies]
+pirate-wallet-service = { path = "../pirate-unified-wallet/crates/pirate-wallet-service" }
+
+anyhow = "1.0"
+axum = "0.7"
+hex = "0.4"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rusqlite = { version = "0.38", features = ["bundled-sqlcipher-vendored-openssl", "modern_sqlite"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.41", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"

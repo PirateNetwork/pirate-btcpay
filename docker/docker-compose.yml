@@ -31,18 +31,36 @@ services:
       - 14142:14142
 
   walletd:
-    image: ${ARRR_WALLETD_IMAGE:-kardingson/pirate_btcpay_walletd}:${ARRR_WALLETD_TAG:-v0.1.1}
-    command: "./walletd"
+    image: ${ARRR_WALLETD_IMAGE:-piratenetwork/pirate-btcpay-walletd}:${ARRR_WALLETD_TAG:-latest}
+    command: "./pirate-btcpay-walletd"
     environment:
       RUST_LOG: info
       BTCPAYSERVER_starting_height: 3602130
-      BTCPAYSERVER_fvk: zxviews1qdchfgzdqyqqpqqjg4l47nd9t5m0j6kzwsxaf84ktc74uhc4nnnu8fgwyjk0958xnytz45xhudjar87c97q5jqq52duq9s3vqhntt0udhxczqfzm25aqsnuhk84pmpt9mahah4eqtjjjqqywwlxg82e6t9ngm9glr9qhxcdttc2mkkcwjr9clqsskx7u2fwlh0prseppxw8ap7fm5s9zxatf6a4lt8tf9j9kkywhpqfqpr5avtcrc8ahndzssjjppsnqupcxecypplsfjgwek
-      BTCPAYSERVER_lwd_url: https://lightd1.pirate.black:443
+      BTCPAYSERVER_sapling_fvk: zxviews1qdchfgzdqyqqpqqjg4l47nd9t5m0j6kzwsxaf84ktc74uhc4nnnu8fgwyjk0958xnytz45xhudjar87c97q5jqq52duq9s3vqhntt0udhxczqfzm25aqsnuhk84pmpt9mahah4eqtjjjqqywwlxg82e6t9ngm9glr9qhxcdttc2mkkcwjr9clqsskx7u2fwlh0prseppxw8ap7fm5s9zxatf6a4lt8tf9j9kkywhpqfqpr5avtcrc8ahndzssjjppsnqupcxecypplsfjgwek
+      # Dev-only placeholder. Export this from the same wallet/seed as
+      # sapling_fvk above (`export_ironwood_viewing_key`) - required so
+      # address generation keeps working once the network activates Ironwood.
+      BTCPAYSERVER_ironwood_fvk: "REPLACE_WITH_YOUR_IRONWOOD_EXTENDED_FVK"
+      # Dev-only placeholder. Independent of BTCPAYSERVER_sapling_fvk by
+      # design - see config.rs for why this must never be derived from the
+      # viewing key.
+      BTCPAYSERVER_storage_passphrase: "dev-only-placeholder-change-me"
+      # Comma-separated, priority order. The notify loop fails over to the
+      # next one after repeated sync failures and switches back once a
+      # higher-priority endpoint recovers (see failover.rs).
+      BTCPAYSERVER_lwd_urls: https://lightd1.pirate.black:443,https://64.23.167.130:9067
+      # Transport for reaching lwd_urls: direct (default), tor, i2p, or
+      # socks5 (needs BTCPAYSERVER_tunnel_socks5_url too). Uncomment to
+      # connect to lightwalletd's Tor/I2P endpoints instead of clearnet.
+      # BTCPAYSERVER_tunnel_mode: tor
       BTCPAYSERVER_poll_interval: "10"
       BTCPAYSERVER_notify_host: http://server:14142
       BTCPAYSERVER_confirmations: "6"
+      BTCPAYSERVER_db_dir: /wallet
     expose:
       - 8000
+    volumes:
+      - "arrr_wallet:/wallet"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS -X POST http://localhost:8000/get_height >/dev/null || exit 1"]
       interval: 30s
@@ -58,4 +76,7 @@ services:
       - "39372:5432"
     expose:
       - "5432"
+
+volumes:
+  arrr_wallet:
 

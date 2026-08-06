@@ -17,14 +17,14 @@ Edit the `starting_height` in `Rocket.toml`
 CD into the repo root ~/pirate-btcpay
 
 ```
-git submodule update --init
-cargo b --release
+git submodule update --init --recursive
+cargo b --release -p pirate-btcpay-walletd
 ```
 
 # Run
 
 ```
-./target/release/walletd
+./target/release/pirate-btcpay-walletd
 ```
 
 # Test
@@ -60,7 +60,9 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
 4. Edit config values in `compose.yaml` file:
    - Set your Pirate Full Viewing Key and wallet birthday height from your wallet:
    ```
-   fvk: Your-Full-Veiwing-Key
+   sapling_fvk: Your-Sapling-Full-Viewing-Key
+   ironwood_fvk: Your-Ironwood-Full-Viewing-Key (export from the same seed as sapling_fvk)
+   storage_passphrase: Replace-The-Sample-Placeholder-With-A-Real-Passphrase
    starting_height: 200000 (example, base this on your wallet's birthday height)
    confirmations: 6 (Set to 6 by default. You can change the number of confirmations before a transaction is accepted)
    ```
@@ -82,7 +84,7 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
    Set-Location "$HOME/pirate-btcpay"
    curl.exe -fsSL https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml -o compose.yaml
    ```
-4. Edit `compose.yaml` and set `fvk` and `starting_height` as step 4 in Windows CMD instructions
+4. Edit `compose.yaml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
 5. Start services:
    ```
    docker compose up -d default
@@ -96,7 +98,7 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
    mkdir -p "$HOME/pirate-btcpay" && cd "$HOME/pirate-btcpay"
    curl -fsSL https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml -o compose.yaml
    ```
-3. Edit `compose.yaml` and set `fvk` and `starting_height` as step 4 in Windows CMD instructions
+3. Edit `compose.yaml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
 4. Start services:
    ```
    docker compose up -d default
@@ -110,7 +112,7 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
    mkdir -p "$HOME/pirate-btcpay" && cd "$HOME/pirate-btcpay"
    curl -fsSL https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml -o compose.yaml
    ```
-3. Edit `compose.yaml` and set `fvk` and `starting_height` as step 4 in Windows CMD instructions
+3. Edit `compose.yaml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
 4. Start services:
    ```
    docker compose up -d default
@@ -118,13 +120,16 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
 5. Complete the same UI steps as steps 6 to 9 in Windows CMD instructions
 
 ## Configuration notes
-- **Full Viewing Key**: Put your ARRR FVK in `fvk`
+- **Sapling Full Viewing Key**: Put your ARRR Sapling FVK in `sapling_fvk`
+- **Ironwood Full Viewing Key**: Put the same wallet's Ironwood FVK in `ironwood_fvk`. Required — address generation fails once the network activates Ironwood if this is missing.
+- **Storage passphrase**: Set `storage_passphrase` to a real secret. It encrypts the wallet's local database and is intentionally independent of `sapling_fvk`/`ironwood_fvk` — never reuse or derive it from either viewing key.
 - **starting_height**: Use your wallet’s birthday height for fastest sync
-- **Lightwalletd URL**: Set to `https://lightd1.pirate.black:443` (change via `lwd_url` if needed)
+- **Lightwalletd URLs**: `lwd_urls` takes a comma-separated, priority-ordered list (defaults to `https://lightd1.pirate.black:443,https://64.23.167.130:9067`). If the primary goes down, the wallet fails over to the next one automatically and switches back once it recovers — no manual intervention needed.
+- **Tor / I2P**: Set `tunnel_mode` to `tor`, `i2p`, or `socks5` (with `tunnel_socks5_url`) to reach `lwd_urls` over that transport instead of clearnet — useful once lightwalletd's Tor/I2P endpoints are live. Defaults to `direct`.
 
 ## Troubleshooting
 - If the site isn’t reachable, ensure Docker is running and ports aren’t in use
-- If walletd shows unhealthy, check logs and confirm `fvk` and `starting_height` are set correctly
+- If walletd shows unhealthy, check logs and confirm `sapling_fvk`, `ironwood_fvk`, `storage_passphrase`, `lwd_urls`, and `starting_height` are all set correctly
 
 ## Build and use your own Docker images
 If you prefer to build and publish your own `server` and `walletd` images, follow these steps.
@@ -160,4 +165,4 @@ docker compose up -d default
 ```
 
 Note: The compose file currently defaults to `kardingson/pirate_btcpay_server:latest` and
-`kardingson/pirate_btcpay_walletd:v0.1.1`. Overwrite these with your own names/tags as shown above.
+`piratenetwork/pirate-btcpay-walletd:latest`. Overwrite these with your own names/tags as shown above.

@@ -93,7 +93,7 @@ describe('pirate-btcpay', async function () {
         const rep = await chakram.post('http://localhost:8000/get_fee_estimate', {})
         expect(rep).to.have.status(200)
         expect(rep.body).to.deep.equal({
-            "fee": 1000
+            "fee": 10000
         })
     })
 

@@ -5,25 +5,26 @@ RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 RUN apt-get install -yq curl gnupg2
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+# pirate-unified-wallet pins 1.90.0 (see its rust-toolchain.toml); the build
+# below runs from this repo's root, above that submodule, so rustup would
+# otherwise pick whatever "latest stable" it installs instead.
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --default-toolchain 1.90.0
 RUN apt-get update
-RUN apt-get install -yq unzip xz-utils clang cmake git pkg-config libssl-dev
+RUN apt-get install -yq unzip xz-utils clang cmake git pkg-config libssl-dev libsqlite3-dev protobuf-compiler
 
 #syntax=docker/dockerfile:1.2
 FROM dev as builder
 
 ENV PATH $PATH:/root/.cargo/bin
 
-COPY . /walletd
+COPY . /pirate-btcpay
 
-RUN cd /walletd && cargo b -r
+RUN cd /pirate-btcpay && cargo b -r -p pirate-btcpay-walletd
 
 FROM ubuntu:jammy
 WORKDIR /root
-COPY --from=builder /walletd/target/release/walletd ./
-COPY --from=builder /walletd/Rocket.toml ./
+COPY --from=builder /pirate-btcpay/target/release/pirate-btcpay-walletd ./
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-

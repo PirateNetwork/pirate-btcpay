@@ -3,44 +3,35 @@ title: Usage
 weight: 30
 ---
 
-`walletd` is meant to be used with BTCPayserver. However, it is a standalone
-server that answers to REST RPC.
+`pirate-btcpay-walletd` is meant to be used with BTCPayserver. However, it is
+a standalone server that answers to REST RPC.
 
 ## Configuration
 
-The configuratio is in `Rocket.toml`
+Configuration is entirely through environment variables, each prefixed
+`BTCPAYSERVER_`:
 
-```toml
-[default]
-db_dir = "."
-confirmations = 6
-lwd_url = "http://localhost:9067"
-poll_interval = 10
-notify_host = "localhost"
-fvk = "zxviews1qw73xgmkqqqqpqx3f2a93lddczpdk4kt58dh5nceks7l8jhw6zc30up6ph3etllafdp5f90st33sa6p27jmevdelhx6fpmhk698vyu7lfn0z6gpqr3nfedhec5k9x0w826fej59j84xqkndqe0ymety9sgc4ttfn82gheu988d9dr9n99zege9egzadkwf8eeur3xm5tajctx625ux67w0dlsl8hsa4l889js800jq6xvcnyp3v0tnh65cqwq6xfnk9cqczue24wyyskv63ke"
-starting_height = 1915516
-
-[debug]
-address = "127.0.0.1"
-
-[release]
-address = "0.0.0.0"
-```
-
-The default section applies to both profile. The debug section is for debug builds and the release profile is for the 
-release build.
-
-- `db_dir`: Location of the database directory where the `wallet.db` file is created.
+- `db_dir`: Location of the database directory where the wallet databases are created.
 - `confirmations`: The number of block confirmations needed for a payment to be unlocked
-- `lwd_url`: URL of the `lightwalletd` server
+- `lwd_urls`: Comma-separated `lightwalletd` server URLs, in priority order (first is primary). The notify loop fails over to the next one after 3 consecutive sync failures, and periodically re-probes higher-priority endpoints so it switches back once one recovers — you don't need to intervene manually.
 - `poll_interval`: Frequency at which the wallet will check new blocks
-- `notify_host`: Hostname of the BTCPayserver. `walletd` calls back BTCPayserver when it detects an incoming payment.
-- `fvk`: The wallet Extended Full Viewing Key
+- `notify_host`: Hostname of the BTCPayserver. `pirate-btcpay-walletd` calls back BTCPayserver when it detects an incoming payment.
+- `sapling_fvk`: The wallet's Sapling Extended Full Viewing Key
+- `ironwood_fvk`: The same wallet's Ironwood Extended Full Viewing Key. Required, not optional — `pirate-btcpay-walletd` derives new receive addresses as Ironwood once the network's Ironwood activation height passes, and address generation fails outright if no Ironwood key is on file at that point. Export it from the same seed as `sapling_fvk`.
+- `storage_passphrase`: Passphrase for the wallet's encrypted-at-rest local storage. Independent of `sapling_fvk`/`ironwood_fvk` — never derive it from either viewing key, since anyone with them (which flow through less-trusted paths, like the BTCPay store config) would then also be able to reconstruct the wallet DB's encryption key.
 - `starting_height`: The birth height of the wallet, i.e. no transactions occurred before that height.
-- `address`: Listening address
+- `tunnel_mode`: Transport used to reach `lwd_urls`: `direct` (default), `tor`, `i2p`, or `socks5`. Lightwalletd is being upgraded to expose Tor/I2P endpoints, and the wallet engine this shim is built on already supports connecting over them — set this to actually use one instead of clearnet.
+- `tunnel_socks5_url`: Proxy URL, required only when `tunnel_mode` is `socks5`.
+
+`db_dir`, `confirmations`, `poll_interval`, `starting_height`, and
+`tunnel_mode` have defaults (`.`, `6`, `10`, `0`, `direct` respectively);
+`sapling_fvk`, `ironwood_fvk`, `storage_passphrase`, `lwd_urls`, and
+`notify_host` are required and the process will fail to start without them.
 
 ## Wallet Configuration
 
 {{%notice warning%}}
-At a minimum, you will need to change `fvk` and `starting_height`.
+At a minimum, you will need to set `sapling_fvk`, `ironwood_fvk`,
+`starting_height`, and a real `storage_passphrase` (not the placeholder from
+the sample compose file).
 {{%/notice %}}

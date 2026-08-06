@@ -3,6 +3,13 @@ title: Accounts
 weight: 10
 ---
 
+{{%notice note%}}
+Addresses returned by `create_account`/`create_address` may be Sapling
+(`zs1...`) or Ironwood (`pirate1...`), depending on the network's
+sync height relative to Ironwood activation. Both are opaque strings from
+the caller's perspective — no special handling is needed either way.
+{{%/notice %}}
+
 ## Create a new account
 
 Create a new account and return its index and first address

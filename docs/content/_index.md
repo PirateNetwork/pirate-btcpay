@@ -13,12 +13,14 @@ Requirements: Docker
 Tested on Linux
 
 1. Download the `docker-compose.yml` for this project
-2. **Edit BTCPAYSERVER_starting_height and BTCPAYSERVER_fvk**. They
-should set to your receiving wallet birth height and full viewing key.
+2. **Edit BTCPAYSERVER_starting_height, BTCPAYSERVER_sapling_fvk, BTCPAYSERVER_ironwood_fvk,
+and BTCPAYSERVER_storage_passphrase**. Set the first three to your receiving
+wallet's birth height, Sapling full viewing key, and Ironwood full
+viewing key; set the last to a real passphrase, not the sample placeholder.
 3. Launch the server
 
 ```
-$ wget https://raw.githubusercontent.com/hhanh01/pirate-btcpay/main/docker/docker-compose.yml
+$ wget https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml
 $ vim docker-compose.yml
 $ docker-compose -f docker-compose.yml up default
 ```

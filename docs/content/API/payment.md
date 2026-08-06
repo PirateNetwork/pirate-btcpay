@@ -5,14 +5,14 @@ weight: 40
 
 ## Fee Estimate
 
-For shielded payments, the fee is 0.01 m
+For shielded payments, the fee is a fixed 0.0001 ARRR (10,000 arrrtoshi).
 
 ```js
 it("Get fee estimate", async function () {
     const rep = await chakram.post('http://localhost:8000/get_fee_estimate', {})
     expect(rep).to.have.status(200)
     expect(rep.body).to.deep.equal({
-        "fee": 1000
+        "fee": 10000
     })
 })
 ```
