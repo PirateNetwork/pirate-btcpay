@@ -31,7 +31,16 @@ services:
       - 14142:14142
 
   walletd:
-    image: ${ARRR_WALLETD_IMAGE:-piratenetwork/pirate-btcpay-walletd}:${ARRR_WALLETD_TAG:-latest}
+    # No prebuilt image is published anywhere yet, so this builds from
+    # source by default (needs the full repo, incl. submodules, checked
+    # out - a single downloaded compose.yaml alone is not enough). If you
+    # publish your own image, override ARRR_WALLETD_IMAGE/ARRR_WALLETD_TAG
+    # and run `docker compose pull walletd && docker compose up --no-build`
+    # to skip building.
+    image: ${ARRR_WALLETD_IMAGE:-pirate-btcpay-walletd}:${ARRR_WALLETD_TAG:-local}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile-walletd
     command: "./pirate-btcpay-walletd"
     environment:
       RUST_LOG: info

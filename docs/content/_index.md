@@ -8,21 +8,24 @@ date: 2022-04-26T13:40:30+08:00
 
 ## Quick Start
 
-Requirements: Docker
+Requirements: Docker, git
 
 Tested on Linux
 
-1. Download the `docker-compose.yml` for this project
+1. Clone this repo with submodules (`walletd` has no published image yet,
+   so it builds from source — a single downloaded `docker-compose.yml`
+   isn't enough on its own)
 2. **Edit BTCPAYSERVER_starting_height, BTCPAYSERVER_sapling_fvk, BTCPAYSERVER_ironwood_fvk,
 and BTCPAYSERVER_storage_passphrase**. Set the first three to your receiving
 wallet's birth height, Sapling full viewing key, and Ironwood full
 viewing key; set the last to a real passphrase, not the sample placeholder.
-3. Launch the server
+3. Launch the server (first run builds the walletd image from source, a few minutes)
 
 ```
-$ wget https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml
-$ vim docker-compose.yml
-$ docker-compose -f docker-compose.yml up default
+$ git clone --recursive https://github.com/PirateNetwork/pirate-btcpay.git
+$ cd pirate-btcpay
+$ vim docker/docker-compose.yml
+$ docker compose -f docker/docker-compose.yml up default
 ```
 
 ## Configuration

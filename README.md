@@ -40,24 +40,26 @@ npx mocha
 
 ## Pirate Chain BTCPay Server
 
-A minimal, self-hostable BTCPay Server setup for Pirate Chain (ARRR). This pulls prebuilt images and runs them with Docker.
+A minimal, self-hostable BTCPay Server setup for Pirate Chain (ARRR), run with Docker.
+`server` pulls a prebuilt image; `walletd` has no published image yet, so it
+builds from source on first `up` (a few minutes the first time).
 
 ## Prerequisites
 - **Docker**: Install Docker Desktop or Docker Engine for your OS (`https://www.docker.com`)
-- **curl**: Installed by default on macOS/Linux; on Windows, use `curl.exe --install` in CMD/PowerShell
+- **git**: Needed to clone the repo (walletd builds from source, so a single downloaded compose file isn't enough)
 
 ## Quick start
 Follow the instructions for your OS. All paths below create and use a new `pirate-btcpay` folder in your home directory.
 
 ### Windows (CMD)
-1. Install Docker from `https://www.docker.com` and start it
+1. Install Docker and Git from `https://www.docker.com` / `https://git-scm.com` and start Docker
 2. Open CMD
-3. Create a working folder and download the compose file:
+3. Clone the repo (with submodules — walletd builds from the `pirate-unified-wallet` submodule):
    ```
-   mkdir %USERPROFILE%\pirate-btcpay && cd %USERPROFILE%\pirate-btcpay
-   curl -fsSL https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml -o compose.yaml
+   git clone --recursive https://github.com/PirateNetwork/pirate-btcpay.git %USERPROFILE%\pirate-btcpay
+   cd %USERPROFILE%\pirate-btcpay
    ```
-4. Edit config values in `compose.yaml` file:
+4. Edit config values in `docker/docker-compose.yml`:
    - Set your Pirate Full Viewing Key and wallet birthday height from your wallet:
    ```
    sapling_fvk: Your-Sapling-Full-Viewing-Key
@@ -66,9 +68,9 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
    starting_height: 200000 (example, base this on your wallet's birthday height)
    confirmations: 6 (Set to 6 by default. You can change the number of confirmations before a transaction is accepted)
    ```
-5. Start services:
+5. Start services (first run builds the walletd image from source, a few minutes):
    ```
-   docker compose up -d default
+   docker compose -f docker/docker-compose.yml up -d default
    ```
 6. Open `http://localhost:14142/register` in your browser
 7. Create an account
@@ -76,18 +78,17 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
 9. Go to Settings → Pirate → Modify → tick Enabled → Save
 
 ### Windows (PowerShell)
-1. Install Docker from `https://www.docker.com` and start it
+1. Install Docker and Git from `https://www.docker.com` / `https://git-scm.com` and start Docker
 2. Open PowerShell
-3. Create a working folder and download the compose file:
+3. Clone the repo (with submodules):
    ```
-   New-Item -ItemType Directory -Force -Path "$HOME/pirate-btcpay" | Out-Null
+   git clone --recursive https://github.com/PirateNetwork/pirate-btcpay.git "$HOME/pirate-btcpay"
    Set-Location "$HOME/pirate-btcpay"
-   curl.exe -fsSL https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml -o compose.yaml
    ```
-4. Edit `compose.yaml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
-5. Start services:
+4. Edit `docker/docker-compose.yml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
+5. Start services (first run builds the walletd image from source, a few minutes):
    ```
-   docker compose up -d default
+   docker compose -f docker/docker-compose.yml up -d default
    ```
 6. Complete the same UI steps as steps 6 to 9 in Windows CMD instructions
 
@@ -95,13 +96,13 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
 1. Install Docker Desktop for Mac and start it
 2. In Terminal:
    ```
-   mkdir -p "$HOME/pirate-btcpay" && cd "$HOME/pirate-btcpay"
-   curl -fsSL https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml -o compose.yaml
+   git clone --recursive https://github.com/PirateNetwork/pirate-btcpay.git "$HOME/pirate-btcpay"
+   cd "$HOME/pirate-btcpay"
    ```
-3. Edit `compose.yaml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
-4. Start services:
+3. Edit `docker/docker-compose.yml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
+4. Start services (first run builds the walletd image from source, a few minutes):
    ```
-   docker compose up -d default
+   docker compose -f docker/docker-compose.yml up -d default
    ```
 5. Complete the same UI steps as steps 6 to 9 in Windows CMD instructions`
 
@@ -109,13 +110,13 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
 1. Install Docker Engine or Docker Desktop and ensure your user can run Docker
 2. In a terminal:
    ```
-   mkdir -p "$HOME/pirate-btcpay" && cd "$HOME/pirate-btcpay"
-   curl -fsSL https://raw.githubusercontent.com/PirateNetwork/pirate-btcpay/main/docker/docker-compose.yml -o compose.yaml
+   git clone --recursive https://github.com/PirateNetwork/pirate-btcpay.git "$HOME/pirate-btcpay"
+   cd "$HOME/pirate-btcpay"
    ```
-3. Edit `compose.yaml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
-4. Start services:
+3. Edit `docker/docker-compose.yml` and set `sapling_fvk` and `starting_height` as step 4 in Windows CMD instructions
+4. Start services (first run builds the walletd image from source, a few minutes):
    ```
-   docker compose up -d default
+   docker compose -f docker/docker-compose.yml up -d default
    ```
 5. Complete the same UI steps as steps 6 to 9 in Windows CMD instructions
 
@@ -132,7 +133,9 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
 - If walletd shows unhealthy, check logs and confirm `sapling_fvk`, `ironwood_fvk`, `storage_passphrase`, `lwd_urls`, and `starting_height` are all set correctly
 
 ## Build and use your own Docker images
-If you prefer to build and publish your own `server` and `walletd` images, follow these steps.
+`walletd` already builds from source by default (no image is published
+anywhere). If you'd rather publish your own images and skip building on
+every machine, follow these steps.
 
 1) Build images locally (from the repo root):
 ```
@@ -148,7 +151,7 @@ docker push YOUR_DOCKERHUB_USERNAME/pirate_btcpay_walletd:YOUR_TAG
 ```
 
 3) Point compose to your images by editing `docker/docker-compose.yml`:
-- Replace the `image:` lines under `server` and `walletd` with your image names and tags.
+- Replace the `image:` lines under `server` and `walletd` with your image names and tags, and remove the `build:` block under `walletd` (otherwise compose builds from source instead of using your image).
 ```yaml
   server:
     image: YOUR_DOCKERHUB_USERNAME/pirate_btcpay_server:YOUR_TAG
@@ -156,6 +159,7 @@ docker push YOUR_DOCKERHUB_USERNAME/pirate_btcpay_walletd:YOUR_TAG
 
   walletd:
     image: YOUR_DOCKERHUB_USERNAME/pirate_btcpay_walletd:YOUR_TAG
+    # build: ...  <- remove this block
     # ...
 ```
 
@@ -164,5 +168,6 @@ docker push YOUR_DOCKERHUB_USERNAME/pirate_btcpay_walletd:YOUR_TAG
 docker compose up -d default
 ```
 
-Note: The compose file currently defaults to `kardingson/pirate_btcpay_server:latest` and
-`piratenetwork/pirate-btcpay-walletd:latest`. Overwrite these with your own names/tags as shown above.
+Note: The compose file currently defaults `server` to `kardingson/pirate_btcpay_server:latest`
+and builds `walletd` from source as `pirate-btcpay-walletd:local`. Overwrite these with your
+own names/tags as shown above.
