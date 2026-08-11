@@ -3712,6 +3712,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "liblzma-sys",
  "native-tls",
  "once_cell",
  "parking_lot",
@@ -3767,7 +3768,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "shardtree 0.6.2",
+ "shardtree",
  "thiserror 2.0.19",
  "tracing",
  "uuid",
@@ -3812,7 +3813,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "shardtree 0.6.2",
+ "shardtree",
  "subtle",
  "sysinfo 0.30.13",
  "thiserror 2.0.19",
@@ -5035,18 +5036,6 @@ dependencies = [
 
 [[package]]
 name = "shardtree"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "359e552886ae54d1642091645980d83f7db465fd9b5b0248e3680713c1773388"
-dependencies = [
- "bitflags 2.13.1",
- "either",
- "incrementalmerkletree",
- "tracing",
-]
-
-[[package]]
-name = "shardtree"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8147447aed7be4736e271825b8c3a4432efb7182e71363169b572371ddef452e"
@@ -5773,6 +5762,7 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -7807,7 +7797,7 @@ dependencies = [
  "rayon",
  "sapling-crypto",
  "secrecy",
- "shardtree 0.7.1",
+ "shardtree",
  "subtle",
  "time",
  "tonic-prost-build",

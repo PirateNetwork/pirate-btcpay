@@ -57,7 +57,7 @@ services:
       # Comma-separated, priority order. The notify loop fails over to the
       # next one after repeated sync failures and switches back once a
       # higher-priority endpoint recovers (see failover.rs).
-      BTCPAYSERVER_lwd_urls: https://lightd1.pirate.black:443,https://64.23.167.130:9067
+      BTCPAYSERVER_lwd_urls: https://lightd1.pirate.black:443,http://64.23.167.130:9067
       # Transport for reaching lwd_urls: direct (default), tor, i2p, or
       # socks5 (needs BTCPAYSERVER_tunnel_socks5_url too). Uncomment to
       # connect to lightwalletd's Tor/I2P endpoints instead of clearnet.

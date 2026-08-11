@@ -125,7 +125,7 @@ Follow the instructions for your OS. All paths below create and use a new `pirat
 - **Ironwood Full Viewing Key**: Put the same wallet's Ironwood FVK in `ironwood_fvk`. Required — address generation fails once the network activates Ironwood if this is missing.
 - **Storage passphrase**: Set `storage_passphrase` to a real secret. It encrypts the wallet's local database and is intentionally independent of `sapling_fvk`/`ironwood_fvk` — never reuse or derive it from either viewing key.
 - **starting_height**: Use your wallet’s birthday height for fastest sync
-- **Lightwalletd URLs**: `lwd_urls` takes a comma-separated, priority-ordered list (defaults to `https://lightd1.pirate.black:443,https://64.23.167.130:9067`). If the primary goes down, the wallet fails over to the next one automatically and switches back once it recovers — no manual intervention needed.
+- **Lightwalletd URLs**: `lwd_urls` takes a comma-separated, priority-ordered list (defaults to `https://lightd1.pirate.black:443,http://64.23.167.130:9067`). If the primary goes down, the wallet fails over to the next one automatically and switches back once it recovers — no manual intervention needed.
 - **Tor / I2P**: Set `tunnel_mode` to `tor`, `i2p`, or `socks5` (with `tunnel_socks5_url`) to reach `lwd_urls` over that transport instead of clearnet — useful once lightwalletd's Tor/I2P endpoints are live. Defaults to `direct`.
 
 ## Troubleshooting

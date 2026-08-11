@@ -28,13 +28,24 @@ pub fn spawn(state: Arc<AppState>) {
 }
 
 async fn tick(state: &Arc<AppState>) -> anyhow::Result<()> {
-    let sync_result = pirate_wallet_service::start_sync(state.wallet_id.clone(), SyncMode::Compact).await;
+    // start_sync only spawns pirate-wallet-service's own background sync
+    // task and returns Ok as soon as that spawn succeeds - it does not wait
+    // for, or report, whether the sync itself actually connects or
+    // completes. It is therefore useless as a failure signal: kick it off
+    // for its side effect, but never derive failover decisions from its
+    // return value.
+    if let Err(e) =
+        pirate_wallet_service::start_sync(state.wallet_id.clone(), SyncMode::Compact).await
+    {
+        tracing::warn!("start_sync returned an error: {}", e);
+    }
 
-    let switch = state
-        .failover
-        .lock()
-        .await
-        .record_result(sync_result.is_ok());
+    let active_url = state.failover.lock().await.active_url().to_string();
+    tracing::debug!("probing active endpoint {}", active_url);
+    let probe = pirate_wallet_service::test_node(active_url, None).await;
+    let healthy = matches!(probe, Ok(r) if r.success);
+
+    let switch = state.failover.lock().await.record_result(healthy);
     if let Some(next_url) = switch {
         tracing::warn!(
             "lightwalletd endpoint failed {} times in a row, failing over to {}",
@@ -42,7 +53,7 @@ async fn tick(state: &Arc<AppState>) -> anyhow::Result<()> {
             next_url
         );
         if let Err(e) =
-            pirate_wallet_service::set_lightd_endpoint(state.wallet_id.clone(), next_url, None)
+            crate::safe_calls::set_lightd_endpoint(state.wallet_id.clone(), next_url, None).await
         {
             tracing::warn!("Failed to switch lightd endpoint: {}", e);
         }
@@ -50,9 +61,8 @@ async fn tick(state: &Arc<AppState>) -> anyhow::Result<()> {
 
     try_switch_back_to_higher_priority_endpoint(state).await;
 
-    sync_result?;
-
-    let deposits = pirate_wallet_service::list_incoming_deposits(state.wallet_id.clone(), None)?;
+    let deposits =
+        crate::safe_calls::list_incoming_deposits(state.wallet_id.clone(), None).await?;
     for deposit in deposits {
         if !deposit.confirmed {
             continue;
@@ -81,8 +91,8 @@ async fn try_switch_back_to_higher_priority_endpoint(state: &Arc<AppState>) {
             .map(|(i, url)| (i, url.to_string()))
             .collect()
     };
-
     for (index, url) in candidates {
+        tracing::debug!("probing higher-priority candidate {}", url);
         let result = pirate_wallet_service::test_node(url.clone(), None).await;
         let healthy = matches!(result, Ok(r) if r.success);
         if !healthy {
@@ -91,8 +101,7 @@ async fn try_switch_back_to_higher_priority_endpoint(state: &Arc<AppState>) {
 
         state.failover.lock().await.switch_to(index);
         tracing::info!("higher-priority lightwalletd endpoint {} recovered, switching back", url);
-        if let Err(e) =
-            pirate_wallet_service::set_lightd_endpoint(state.wallet_id.clone(), url, None)
+        if let Err(e) = crate::safe_calls::set_lightd_endpoint(state.wallet_id.clone(), url, None).await
         {
             tracing::warn!("Failed to switch back to recovered lightd endpoint: {}", e);
         }

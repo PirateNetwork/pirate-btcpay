@@ -47,6 +47,23 @@ impl From<anyhow::Error> for ApiError {
 
 type ApiResult<T> = Result<Json<T>, ApiError>;
 
+/// Derive a fresh receive address for the wallet's single (watch-only) key
+/// group.
+///
+/// Deliberately does not use `pirate_wallet_service::next_receive_address`:
+/// that function (and `current_receive_address`) always requires a real
+/// Sapling or Ironwood spending key to derive an address, which this wallet
+/// never has (it only ever holds viewing keys, via `import_viewing_wallet`).
+/// `generate_address_for_key` derives straight from the stored viewing key
+/// instead, which is the only address-generation path that actually works
+/// for a watch-only wallet.
+async fn next_fresh_address(state: &AppState) -> anyhow::Result<String> {
+    let use_ironwood =
+        pirate_wallet_service::is_ironwood_active_for_wallet(state.wallet_id.clone())?;
+    crate::safe_calls::generate_address_for_key(state.wallet_id.clone(), state.key_id, use_ironwood)
+        .await
+}
+
 #[derive(Deserialize)]
 struct CreateAccountRequest {
     #[allow(dead_code)]
@@ -63,7 +80,7 @@ async fn create_account(
     State(state): State<Arc<AppState>>,
     Json(_req): Json<CreateAccountRequest>,
 ) -> ApiResult<CreateAccountResponse> {
-    let address = pirate_wallet_service::next_receive_address(state.wallet_id.clone())?;
+    let address = next_fresh_address(&state).await?;
     let account_index = state.bookkeeping.lock().await.create_account(&address)?;
     Ok(Json(CreateAccountResponse {
         account_index,
@@ -88,7 +105,7 @@ async fn create_address(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateAddressRequest>,
 ) -> ApiResult<CreateAddressResponse> {
-    let address = pirate_wallet_service::next_receive_address(state.wallet_id.clone())?;
+    let address = next_fresh_address(&state).await?;
     let address_index = state
         .bookkeeping
         .lock()
@@ -118,7 +135,7 @@ struct GetAccountsResponse {
 }
 
 async fn get_accounts(State(state): State<Arc<AppState>>) -> ApiResult<GetAccountsResponse> {
-    let balances = pirate_wallet_service::list_address_balances(state.wallet_id.clone(), None)?;
+    let balances = crate::safe_calls::list_address_balances(state.wallet_id.clone(), None).await?;
     let by_address: HashMap<String, _> = balances
         .into_iter()
         .map(|b| (b.address.clone(), b))
@@ -185,26 +202,21 @@ struct Transfer {
 /// pre-existing funds on the FVK before it was handed to BTCPay) are skipped
 /// since there is no account/sub-account to report them under.
 async fn deposits_as_transfers(state: &AppState) -> anyhow::Result<Vec<Transfer>> {
-    let deposits = pirate_wallet_service::list_incoming_deposits(state.wallet_id.clone(), None)?;
-    let current_height =
-        pirate_wallet_service::sync_status(state.wallet_id.clone())?.target_height as u32;
+    let deposits = crate::safe_calls::list_incoming_deposits(state.wallet_id.clone(), None).await?;
     let bk = state.bookkeeping.lock().await;
     let mut transfers = Vec::new();
     for deposit in deposits {
         let Some((account_index, sub_account)) = bk.lookup_address(&deposit.address)? else {
             continue;
         };
-        let height = deposit.height.unwrap_or(0);
-        let confirmations = if deposit.confirmed && height > 0 {
-            current_height.saturating_sub(height) + 1
-        } else {
-            0
-        };
+        // deposit.confirmations is already computed relative to the
+        // wallet's own locally-synced height - no need to recompute it
+        // against sync_status separately.
         transfers.push(Transfer {
             address: deposit.address,
             amount: deposit.value,
-            confirmations,
-            height,
+            confirmations: deposit.confirmations,
+            height: deposit.height.unwrap_or(0),
             fee: 0,
             note: String::new(),
             payment_id: String::new(),
@@ -213,7 +225,7 @@ async fn deposits_as_transfers(state: &AppState) -> anyhow::Result<Vec<Transfer>
                 minor: sub_account,
             },
             suggested_confirmations_threshold: state.config.confirmations,
-            timestamp: deposit.timestamp.max(0) as u64,
+            timestamp: deposit.timestamp.unwrap_or(0).max(0) as u64,
             txid: deposit.txid,
             r#type: "in".to_string(),
             unlock_time: 0,

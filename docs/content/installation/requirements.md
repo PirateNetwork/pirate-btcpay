@@ -13,7 +13,7 @@ endpoints — no self-hosted `lightwalletd` is required to get started:
 
 ```
 https://lightd1.pirate.black:443
-https://64.23.167.130:9067
+http://64.23.167.130:9067
 ```
 
 `lwd_urls` takes a comma-separated, priority-ordered list — if the primary

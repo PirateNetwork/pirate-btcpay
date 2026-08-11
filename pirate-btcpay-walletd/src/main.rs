@@ -3,6 +3,7 @@ mod config;
 mod failover;
 mod notify;
 mod routes;
+mod safe_calls;
 
 use anyhow::Context;
 use bookkeeping::Bookkeeping;
@@ -15,6 +16,12 @@ use tokio::sync::Mutex;
 
 pub struct AppState {
     pub wallet_id: WalletId,
+    /// Id of the wallet's single key group (the ImportView key created by
+    /// `import_viewing_wallet`). Fetched once at startup and used with
+    /// `generate_address_for_key`, the watch-only-safe address-derivation
+    /// path - see routes.rs for why `next_receive_address` can't be used
+    /// here (it requires a spending key this wallet never has).
+    pub key_id: i64,
     pub bookkeeping: Mutex<Bookkeeping>,
     pub failover: Mutex<FailoverState>,
     pub config: AppConfig,
@@ -57,12 +64,21 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("pirate-btcpay-walletd serving wallet {}", wallet_id);
 
+    let key_groups = pirate_wallet_service::list_key_groups(wallet_id.clone())
+        .context("Failed to list key groups")?;
+    let key_id = key_groups
+        .first()
+        .context("Wallet has no key group after import_viewing_wallet")?
+        .id;
+
     let failover = FailoverState::new(config.lwd_urls.clone());
-    pirate_wallet_service::set_lightd_endpoint(wallet_id.clone(), failover.active_url().to_string(), None)
+    safe_calls::set_lightd_endpoint(wallet_id.clone(), failover.active_url().to_string(), None)
+        .await
         .context("Failed to set initial lightd endpoint")?;
 
     let state = Arc::new(AppState {
         wallet_id,
+        key_id,
         bookkeeping: Mutex::new(bookkeeping),
         failover: Mutex::new(failover),
         config,
