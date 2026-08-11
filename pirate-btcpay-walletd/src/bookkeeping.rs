@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use rusqlite::{params, Connection, OptionalExtension};
 use std::path::Path;
 
@@ -77,10 +77,18 @@ impl Bookkeeping {
         Ok(account_index)
     }
 
-    /// Allocate the next address within an existing account bucket.
-    /// Errors if `create_account` was never called for `account_index`,
-    /// matching walletd's own behavior (its MAX(sub_account) query errors on
-    /// an unknown account rather than silently starting one).
+    /// Allocate the next address within an account bucket, creating the
+    /// bucket if `account_index` hasn't been seen before.
+    ///
+    /// BTCPay's own flow is supposed to call `create_account` once (from
+    /// the store's Pirate settings page) before ever reserving an address
+    /// for a given `account_index` - but a store's saved config can end up
+    /// with an `account_index` that was never actually registered here
+    /// (e.g. that original `create_account` call 500'd server-side, and
+    /// BTCPay kept its client-side default anyway; confirmed happening
+    /// live). Treat an unseen `account_index` as starting fresh at
+    /// sub_account 0 instead of erroring, so a store in that state still
+    /// gets a working deposit address instead of failing every invoice.
     pub fn create_address(&self, account_index: u32, address: &str) -> Result<u32> {
         let max_sub: Option<u32> = self
             .conn
@@ -91,9 +99,7 @@ impl Bookkeeping {
             )
             .optional()?
             .flatten();
-        let sub_account = max_sub
-            .ok_or_else(|| anyhow!("Unknown account_index {account_index}; call create_account first"))?
-            + 1;
+        let sub_account = max_sub.map(|v| v + 1).unwrap_or(0);
         self.conn.execute(
             "INSERT INTO address_allocations (account_index, sub_account, address, created_at)
              VALUES (?1, ?2, ?3, strftime('%s','now'))",
