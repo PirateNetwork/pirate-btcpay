@@ -5,22 +5,29 @@ weight: 10
 
 {{%notice note%}}
 Addresses returned by `create_account`/`create_address` may be Sapling
-(`zs1...`) or Ironwood (`pirate1...`), depending on the network's
-sync height relative to Ironwood activation. Both are opaque strings from
-the caller's perspective — no special handling is needed either way.
+(`zs1...`) or Ironwood (`pirate1...`), depending on which pool the account
+was created with. Both are opaque strings from the caller's perspective —
+no special handling is needed either way.
 {{%/notice %}}
 
 ## Create a new account
 
-Create a new account and return its index and first address
+Create a new account and return its index and first address. An optional
+`pool` field (`"sapling"` or `"ironwood"`) fixes which shielded pool this
+account — and every address later allocated to it via `create_address` —
+generates addresses from. Omitting `pool` falls back to the wallet's
+current default pool (whatever `BTCPAYSERVER_ironwood_fvk`/sync height
+currently resolve to). Once set, an account's pool never changes.
 
 ```js
 it("should allow creating new accounts", async function () {
-    const rep = await chakram.post('http://localhost:8000/create_account', {})
+    const rep = await chakram.post('http://localhost:8000/create_account', {
+        pool: "ironwood"
+    })
     expect(rep).to.have.status(200)
     expect(rep.body).to.deep.equal({
         account_index: 0,
-        address: "zs1xflcmxuagwwn969htsej4mn3nuk7e3eeu3en4n4hkxajnqgmx5jsw0sa4p0r2ymqewf2ufefkfm"
+        address: "pirate1xflcmxuagwwn969htsej4mn3nuk7e3eeu3en4n4hkxajnqgmx5jsw0sa4p0r2ymqewf2ufefkfm"
     })
 })
 ```
@@ -28,7 +35,8 @@ it("should allow creating new accounts", async function () {
 
 ## Create a new sub address
 
-Create a new diversified address for the given account
+Create a new diversified address for the given account, from whichever
+pool that account was created with
 
 ```js
 it("should allow creating new address", async function () {
@@ -37,7 +45,7 @@ it("should allow creating new address", async function () {
     })
     expect(rep).to.have.status(200)
     expect(rep.body).to.deep.equal({
-        address: "zs1afgu28nemdza4exykhvp24d6jxja85jg44gu8k7xwusr5p09yery922nfn228hvagc33x5wkd4h",
+        address: "pirate1afgu28nemdza4exykhvp24d6jxja85jg44gu8k7xwusr5p09yery922nfn228hvagc33x5wkd4h",
         address_index: 1
     })
 })
@@ -60,10 +68,11 @@ it("list accounts", async function () {
             {
                 "account_index": 0,
                 "balance": 99500000,
-                "base_address": "zs1xflcmxuagwwn969htsej4mn3nuk7e3eeu3en4n4hkxajnqgmx5jsw0sa4p0r2ymqewf2ufefkfm",
+                "base_address": "pirate1xflcmxuagwwn969htsej4mn3nuk7e3eeu3en4n4hkxajnqgmx5jsw0sa4p0r2ymqewf2ufefkfm",
                 "label": "",
                 "tag": "",
-                "unlocked_balance": 99500000
+                "unlocked_balance": 99500000,
+                "pool": "ironwood"
             }
         ],
         "total_balance": 99500000,

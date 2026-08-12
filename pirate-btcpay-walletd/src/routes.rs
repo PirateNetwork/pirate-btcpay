@@ -48,7 +48,7 @@ impl From<anyhow::Error> for ApiError {
 type ApiResult<T> = Result<Json<T>, ApiError>;
 
 /// Derive a fresh receive address for the wallet's single (watch-only) key
-/// group.
+/// group, from whichever shielded pool the caller has already resolved.
 ///
 /// Deliberately does not use `pirate_wallet_service::next_receive_address`:
 /// that function (and `current_receive_address`) always requires a real
@@ -57,17 +57,52 @@ type ApiResult<T> = Result<Json<T>, ApiError>;
 /// `generate_address_for_key` derives straight from the stored viewing key
 /// instead, which is the only address-generation path that actually works
 /// for a watch-only wallet.
-async fn next_fresh_address(state: &AppState) -> anyhow::Result<String> {
-    let use_ironwood =
-        pirate_wallet_service::is_ironwood_active_for_wallet(state.wallet_id.clone())?;
+async fn next_fresh_address(state: &AppState, use_ironwood: bool) -> anyhow::Result<String> {
     crate::safe_calls::generate_address_for_key(state.wallet_id.clone(), state.key_id, use_ironwood)
         .await
+}
+
+/// Pool to use when a request doesn't name one explicitly - whatever this
+/// wallet's own Ironwood-activation flag currently says. This is also the
+/// only pool a pre-`pool`-field BTCPay client will ever get, so upgrading
+/// walletd alone doesn't change existing behavior.
+fn default_use_ironwood(state: &AppState) -> anyhow::Result<bool> {
+    pirate_wallet_service::is_ironwood_active_for_wallet(state.wallet_id.clone())
+}
+
+/// Parses the optional `"pool"` request field ("sapling" or "ironwood",
+/// case-insensitive) into `use_ironwood`. `None` means the caller didn't
+/// specify a pool at all.
+fn parse_pool(pool: Option<&str>) -> anyhow::Result<Option<bool>> {
+    match pool {
+        None => Ok(None),
+        Some(s) => match s.to_ascii_lowercase().as_str() {
+            "sapling" => Ok(Some(false)),
+            "ironwood" => Ok(Some(true)),
+            other => Err(anyhow!(
+                "Unknown pool '{other}'; expected 'sapling' or 'ironwood'"
+            )),
+        },
+    }
+}
+
+fn pool_name(use_ironwood: bool) -> &'static str {
+    if use_ironwood {
+        "ironwood"
+    } else {
+        "sapling"
+    }
 }
 
 #[derive(Deserialize)]
 struct CreateAccountRequest {
     #[allow(dead_code)]
     label: Option<String>,
+    /// "sapling" or "ironwood"; defaults to the wallet's own Ironwood
+    /// activation flag when omitted (old clients, or callers with no
+    /// preference).
+    #[serde(default)]
+    pool: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -78,10 +113,18 @@ struct CreateAccountResponse {
 
 async fn create_account(
     State(state): State<Arc<AppState>>,
-    Json(_req): Json<CreateAccountRequest>,
+    Json(req): Json<CreateAccountRequest>,
 ) -> ApiResult<CreateAccountResponse> {
-    let address = next_fresh_address(&state).await?;
-    let account_index = state.bookkeeping.lock().await.create_account(&address)?;
+    let use_ironwood = match parse_pool(req.pool.as_deref())? {
+        Some(v) => v,
+        None => default_use_ironwood(&state)?,
+    };
+    let address = next_fresh_address(&state, use_ironwood).await?;
+    let account_index = state
+        .bookkeeping
+        .lock()
+        .await
+        .create_account(&address, use_ironwood)?;
     Ok(Json(CreateAccountResponse {
         account_index,
         address,
@@ -101,16 +144,24 @@ struct CreateAddressResponse {
     address_index: u32,
 }
 
+/// Addresses within an account always come from the pool that account was
+/// created with, so unlike `create_account` this has no `pool` request
+/// field - the account's pool (fixed at `create_account` time, or the first
+/// time this account_index was self-healed) is looked up instead.
 async fn create_address(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateAddressRequest>,
 ) -> ApiResult<CreateAddressResponse> {
-    let address = next_fresh_address(&state).await?;
+    let use_ironwood = match state.bookkeeping.lock().await.account_pool(req.account_index)? {
+        Some(v) => v,
+        None => default_use_ironwood(&state)?,
+    };
+    let address = next_fresh_address(&state, use_ironwood).await?;
     let address_index = state
         .bookkeeping
         .lock()
         .await
-        .create_address(req.account_index, &address)?;
+        .create_address(req.account_index, &address, use_ironwood)?;
     Ok(Json(CreateAddressResponse {
         address,
         address_index,
@@ -125,6 +176,10 @@ struct AccountBalance {
     unlocked_balance: u64,
     base_address: String,
     tag: String,
+    /// "sapling" or "ironwood" - the pool this account was fixed to at
+    /// creation time. Lets the BTCPay store settings page show which pool
+    /// each existing account actually uses.
+    pool: String,
 }
 
 #[derive(Serialize)]
@@ -157,6 +212,7 @@ async fn get_accounts(State(state): State<Arc<AppState>>) -> ApiResult<GetAccoun
         }
         total_balance = total_balance.saturating_add(balance);
         total_unlocked_balance = total_unlocked_balance.saturating_add(unlocked_balance);
+        let pool = pool_name(bk.account_pool(account_index)?.unwrap_or(false)).to_string();
         subaddress_accounts.push(AccountBalance {
             account_index,
             label: String::new(),
@@ -164,6 +220,7 @@ async fn get_accounts(State(state): State<Arc<AppState>>) -> ApiResult<GetAccoun
             unlocked_balance,
             base_address,
             tag: String::new(),
+            pool,
         });
     }
 

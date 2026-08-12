@@ -17,28 +17,41 @@ pub struct Bookkeeping {
     conn: Connection,
 }
 
+const SCHEMA_SQL: &str = "
+    CREATE TABLE IF NOT EXISTS wallet_state (
+        id INTEGER PRIMARY KEY CHECK (id = 0),
+        wallet_id TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS address_allocations (
+        account_index INTEGER NOT NULL,
+        sub_account INTEGER NOT NULL,
+        address TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        PRIMARY KEY (account_index, sub_account)
+    );
+    CREATE TABLE IF NOT EXISTS notified_deposits (
+        txid TEXT NOT NULL,
+        address TEXT NOT NULL,
+        PRIMARY KEY (txid, address)
+    );
+    CREATE TABLE IF NOT EXISTS account_pools (
+        account_index INTEGER PRIMARY KEY,
+        use_ironwood INTEGER NOT NULL
+    );
+";
+
 impl Bookkeeping {
     pub fn open(dir: &Path) -> Result<Self> {
         std::fs::create_dir_all(dir)?;
         let conn = Connection::open(dir.join("pirate-btcpay-walletd.db"))?;
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS wallet_state (
-                id INTEGER PRIMARY KEY CHECK (id = 0),
-                wallet_id TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS address_allocations (
-                account_index INTEGER NOT NULL,
-                sub_account INTEGER NOT NULL,
-                address TEXT NOT NULL,
-                created_at INTEGER NOT NULL,
-                PRIMARY KEY (account_index, sub_account)
-            );
-            CREATE TABLE IF NOT EXISTS notified_deposits (
-                txid TEXT NOT NULL,
-                address TEXT NOT NULL,
-                PRIMARY KEY (txid, address)
-            );",
-        )?;
+        conn.execute_batch(SCHEMA_SQL)?;
+        Ok(Bookkeeping { conn })
+    }
+
+    #[cfg(test)]
+    fn open_in_memory() -> Result<Self> {
+        let conn = Connection::open_in_memory()?;
+        conn.execute_batch(SCHEMA_SQL)?;
         Ok(Bookkeeping { conn })
     }
 
@@ -60,9 +73,11 @@ impl Bookkeeping {
         Ok(())
     }
 
-    /// Allocate a new account bucket (sub_account 0) for `address`.
+    /// Allocate a new account bucket (sub_account 0) for `address`, fixing
+    /// the shielded pool (Sapling vs Ironwood) that every address in this
+    /// account will be generated from from now on.
     /// Mirrors walletd's own `MAX(account) + 1` allocation scheme.
-    pub fn create_account(&self, address: &str) -> Result<u32> {
+    pub fn create_account(&self, address: &str, use_ironwood: bool) -> Result<u32> {
         let next_account: Option<u32> = self
             .conn
             .query_row("SELECT MAX(account_index) FROM address_allocations", [], |r| {
@@ -74,7 +89,33 @@ impl Bookkeeping {
              VALUES (?1, 0, ?2, strftime('%s','now'))",
             params![account_index, address],
         )?;
+        self.set_account_pool(account_index, use_ironwood)?;
         Ok(account_index)
+    }
+
+    /// The pool (`true` = Ironwood, `false` = Sapling) an account was fixed
+    /// to at creation time, if it has one on record yet.
+    pub fn account_pool(&self, account_index: u32) -> Result<Option<bool>> {
+        Ok(self
+            .conn
+            .query_row(
+                "SELECT use_ironwood FROM account_pools WHERE account_index = ?1",
+                params![account_index],
+                |r| r.get::<_, i64>(0),
+            )
+            .optional()?
+            .map(|v| v != 0))
+    }
+
+    /// Fixes an account's pool the first time it's recorded; a no-op on
+    /// every call after that, so an account's pool never silently changes.
+    fn set_account_pool(&self, account_index: u32, use_ironwood: bool) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO account_pools (account_index, use_ironwood) VALUES (?1, ?2)
+             ON CONFLICT (account_index) DO NOTHING",
+            params![account_index, use_ironwood as i64],
+        )?;
+        Ok(())
     }
 
     /// Allocate the next address within an account bucket, creating the
@@ -89,7 +130,14 @@ impl Bookkeeping {
     /// live). Treat an unseen `account_index` as starting fresh at
     /// sub_account 0 instead of erroring, so a store in that state still
     /// gets a working deposit address instead of failing every invoice.
-    pub fn create_address(&self, account_index: u32, address: &str) -> Result<u32> {
+    ///
+    /// `use_ironwood` should be whatever pool the caller resolved via
+    /// `account_pool` (falling back to the wallet's default when this
+    /// account has no pool on record yet, i.e. it's being self-healed here
+    /// for the first time) - `set_account_pool` is a no-op for an account
+    /// that already has one, so it only actually fixes the pool the first
+    /// time an account_index is seen.
+    pub fn create_address(&self, account_index: u32, address: &str, use_ironwood: bool) -> Result<u32> {
         let max_sub: Option<u32> = self
             .conn
             .query_row(
@@ -105,6 +153,7 @@ impl Bookkeeping {
              VALUES (?1, ?2, ?3, strftime('%s','now'))",
             params![account_index, sub_account, address],
         )?;
+        self.set_account_pool(account_index, use_ironwood)?;
         Ok(sub_account)
     }
 
@@ -156,5 +205,44 @@ impl Bookkeeping {
             params![txid, address],
         )?;
         Ok(changed > 0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_account_fixes_the_requested_pool() {
+        let bk = Bookkeeping::open_in_memory().unwrap();
+        let account_index = bk.create_account("zs1sapling...", false).unwrap();
+        assert_eq!(bk.account_pool(account_index).unwrap(), Some(false));
+    }
+
+    #[test]
+    fn create_address_inherits_the_account_pool_regardless_of_the_flag_passed() {
+        let bk = Bookkeeping::open_in_memory().unwrap();
+        let account_index = bk.create_account("zs1ironwood...", true).unwrap();
+        // A later create_address call always resolves use_ironwood from
+        // account_pool() before calling in; passing false here simulates a
+        // caller bug and proves set_account_pool's ON CONFLICT DO NOTHING
+        // keeps the account's real pool (true) rather than overwriting it.
+        bk.create_address(account_index, "zs1ironwood-addr2...", false)
+            .unwrap();
+        assert_eq!(bk.account_pool(account_index).unwrap(), Some(true));
+    }
+
+    #[test]
+    fn create_address_self_heals_an_unknown_account_into_the_given_pool() {
+        let bk = Bookkeeping::open_in_memory().unwrap();
+        assert_eq!(bk.account_pool(7).unwrap(), None);
+        bk.create_address(7, "zs1selfhealed...", true).unwrap();
+        assert_eq!(bk.account_pool(7).unwrap(), Some(true));
+    }
+
+    #[test]
+    fn account_pool_is_none_for_an_account_never_seen() {
+        let bk = Bookkeeping::open_in_memory().unwrap();
+        assert_eq!(bk.account_pool(42).unwrap(), None);
     }
 }
