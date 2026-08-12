@@ -115,16 +115,23 @@ async fn create_account(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateAccountRequest>,
 ) -> ApiResult<CreateAccountResponse> {
-    let use_ironwood = match parse_pool(req.pool.as_deref())? {
+    let explicit_pool = parse_pool(req.pool.as_deref())?;
+    let use_ironwood = match explicit_pool {
         Some(v) => v,
         None => default_use_ironwood(&state)?,
     };
     let address = next_fresh_address(&state, use_ironwood).await?;
-    let account_index = state
-        .bookkeeping
-        .lock()
-        .await
-        .create_account(&address, use_ironwood)?;
+    let account_index = {
+        let bk = state.bookkeeping.lock().await;
+        let account_index = bk.create_account(&address)?;
+        // Only an explicit request pins the pool; a default resolved from
+        // the wallet's current state is left unpinned, so this account
+        // keeps auto-following that default if it later changes.
+        if let Some(pinned) = explicit_pool {
+            bk.set_account_pool(account_index, pinned)?;
+        }
+        account_index
+    };
     Ok(Json(CreateAccountResponse {
         account_index,
         address,
@@ -144,10 +151,13 @@ struct CreateAddressResponse {
     address_index: u32,
 }
 
-/// Addresses within an account always come from the pool that account was
-/// created with, so unlike `create_account` this has no `pool` request
-/// field - the account's pool (fixed at `create_account` time, or the first
-/// time this account_index was self-healed) is looked up instead.
+/// Addresses within an account come from whatever pool that account is
+/// pinned to, so unlike `create_account` this has no `pool` request field.
+/// If the account was never explicitly pinned (via `create_account`'s
+/// `pool` field), this re-resolves the wallet's current default every
+/// call - so an account an operator never picked a pool for keeps
+/// following that default automatically (e.g. it starts generating
+/// Ironwood addresses on its own once Ironwood activates).
 async fn create_address(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateAddressRequest>,
@@ -161,7 +171,7 @@ async fn create_address(
         .bookkeeping
         .lock()
         .await
-        .create_address(req.account_index, &address, use_ironwood)?;
+        .create_address(req.account_index, &address)?;
     Ok(Json(CreateAddressResponse {
         address,
         address_index,
@@ -176,10 +186,14 @@ struct AccountBalance {
     unlocked_balance: u64,
     base_address: String,
     tag: String,
-    /// "sapling" or "ironwood" - the pool this account was fixed to at
-    /// creation time. Lets the BTCPay store settings page show which pool
-    /// each existing account actually uses.
+    /// "sapling" or "ironwood" - the pool addresses in this account
+    /// currently come from. Lets the BTCPay store settings page show which
+    /// pool each existing account actually uses right now.
     pool: String,
+    /// `true` if `pool` was explicitly pinned and will never change;
+    /// `false` if it's just today's resolution of the wallet's default and
+    /// may later flip (e.g. once Ironwood activates).
+    pool_pinned: bool,
 }
 
 #[derive(Serialize)]
@@ -200,6 +214,9 @@ async fn get_accounts(State(state): State<Arc<AppState>>) -> ApiResult<GetAccoun
     let mut subaddress_accounts = Vec::new();
     let mut total_balance = 0u64;
     let mut total_unlocked_balance = 0u64;
+    // Only computed if some account turns out to be unpinned below - avoids
+    // an extra call when every account already has an explicit pool.
+    let mut current_default_use_ironwood: Option<bool> = None;
     for account_index in bk.list_account_indices()? {
         let base_address = bk.base_address(account_index)?.unwrap_or_default();
         let mut balance = 0u64;
@@ -212,7 +229,19 @@ async fn get_accounts(State(state): State<Arc<AppState>>) -> ApiResult<GetAccoun
         }
         total_balance = total_balance.saturating_add(balance);
         total_unlocked_balance = total_unlocked_balance.saturating_add(unlocked_balance);
-        let pool = pool_name(bk.account_pool(account_index)?.unwrap_or(false)).to_string();
+        let pinned = bk.account_pool(account_index)?;
+        let pool_pinned = pinned.is_some();
+        let use_ironwood = match pinned {
+            Some(v) => v,
+            None => match current_default_use_ironwood {
+                Some(v) => v,
+                None => {
+                    let v = default_use_ironwood(&state)?;
+                    current_default_use_ironwood = Some(v);
+                    v
+                }
+            },
+        };
         subaddress_accounts.push(AccountBalance {
             account_index,
             label: String::new(),
@@ -220,7 +249,8 @@ async fn get_accounts(State(state): State<Arc<AppState>>) -> ApiResult<GetAccoun
             unlocked_balance,
             base_address,
             tag: String::new(),
-            pool,
+            pool: pool_name(use_ironwood).to_string(),
+            pool_pinned,
         });
     }
 

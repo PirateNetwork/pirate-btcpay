@@ -6,18 +6,24 @@ weight: 10
 {{%notice note%}}
 Addresses returned by `create_account`/`create_address` may be Sapling
 (`zs1...`) or Ironwood (`pirate1...`), depending on which pool the account
-was created with. Both are opaque strings from the caller's perspective —
-no special handling is needed either way.
+is pinned to (or the wallet's current default, for an account never
+pinned). Both are opaque strings from the caller's perspective — no
+special handling is needed either way.
 {{%/notice %}}
 
 ## Create a new account
 
 Create a new account and return its index and first address. An optional
-`pool` field (`"sapling"` or `"ironwood"`) fixes which shielded pool this
+`pool` field (`"sapling"` or `"ironwood"`) pins which shielded pool this
 account — and every address later allocated to it via `create_address` —
-generates addresses from. Omitting `pool` falls back to the wallet's
-current default pool (whatever `BTCPAYSERVER_ironwood_fvk`/sync height
-currently resolve to). Once set, an account's pool never changes.
+generates addresses from, permanently; once pinned, an account's pool
+never changes.
+
+Omitting `pool` leaves the account unpinned: every future address for it
+(including this first one) resolves the wallet's current default pool
+fresh each time, so it automatically starts generating Ironwood addresses
+on its own once Ironwood activates for the wallet, with no action needed
+from the caller.
 
 ```js
 it("should allow creating new accounts", async function () {
@@ -36,7 +42,8 @@ it("should allow creating new accounts", async function () {
 ## Create a new sub address
 
 Create a new diversified address for the given account, from whichever
-pool that account was created with
+pool that account is currently pinned to (or the wallet's current default,
+if it was never pinned)
 
 ```js
 it("should allow creating new address", async function () {
@@ -72,7 +79,8 @@ it("list accounts", async function () {
                 "label": "",
                 "tag": "",
                 "unlocked_balance": 99500000,
-                "pool": "ironwood"
+                "pool": "ironwood",
+                "pool_pinned": true
             }
         ],
         "total_balance": 99500000,

@@ -73,11 +73,14 @@ impl Bookkeeping {
         Ok(())
     }
 
-    /// Allocate a new account bucket (sub_account 0) for `address`, fixing
-    /// the shielded pool (Sapling vs Ironwood) that every address in this
-    /// account will be generated from from now on.
+    /// Allocate a new account bucket (sub_account 0) for `address`.
     /// Mirrors walletd's own `MAX(account) + 1` allocation scheme.
-    pub fn create_account(&self, address: &str, use_ironwood: bool) -> Result<u32> {
+    ///
+    /// Does not touch the account's pool - callers that resolved an
+    /// explicit pool for this account (as opposed to falling back to the
+    /// wallet's current default) must call `set_account_pool` themselves
+    /// once they have the resulting `account_index`.
+    pub fn create_account(&self, address: &str) -> Result<u32> {
         let next_account: Option<u32> = self
             .conn
             .query_row("SELECT MAX(account_index) FROM address_allocations", [], |r| {
@@ -89,12 +92,15 @@ impl Bookkeeping {
              VALUES (?1, 0, ?2, strftime('%s','now'))",
             params![account_index, address],
         )?;
-        self.set_account_pool(account_index, use_ironwood)?;
         Ok(account_index)
     }
 
-    /// The pool (`true` = Ironwood, `false` = Sapling) an account was fixed
-    /// to at creation time, if it has one on record yet.
+    /// The pool (`true` = Ironwood, `false` = Sapling) an account was
+    /// explicitly pinned to, if any. `None` means the account has never
+    /// been pinned - every address for it should keep resolving the
+    /// wallet's current default pool fresh, so it follows along
+    /// automatically whenever that default changes (e.g. Ironwood
+    /// activating on the network).
     pub fn account_pool(&self, account_index: u32) -> Result<Option<bool>> {
         Ok(self
             .conn
@@ -107,9 +113,13 @@ impl Bookkeeping {
             .map(|v| v != 0))
     }
 
-    /// Fixes an account's pool the first time it's recorded; a no-op on
-    /// every call after that, so an account's pool never silently changes.
-    fn set_account_pool(&self, account_index: u32, use_ironwood: bool) -> Result<()> {
+    /// Pins an account to a pool for good - once pinned, an account's pool
+    /// never changes, regardless of what the wallet's default becomes
+    /// later. Only call this for a pool the caller (or the operator) chose
+    /// explicitly; a no-op on every call after the first, so re-pinning to
+    /// a different pool later is simply ignored rather than silently
+    /// switching an already-pinned account.
+    pub fn set_account_pool(&self, account_index: u32, use_ironwood: bool) -> Result<()> {
         self.conn.execute(
             "INSERT INTO account_pools (account_index, use_ironwood) VALUES (?1, ?2)
              ON CONFLICT (account_index) DO NOTHING",
@@ -130,14 +140,9 @@ impl Bookkeeping {
     /// live). Treat an unseen `account_index` as starting fresh at
     /// sub_account 0 instead of erroring, so a store in that state still
     /// gets a working deposit address instead of failing every invoice.
-    ///
-    /// `use_ironwood` should be whatever pool the caller resolved via
-    /// `account_pool` (falling back to the wallet's default when this
-    /// account has no pool on record yet, i.e. it's being self-healed here
-    /// for the first time) - `set_account_pool` is a no-op for an account
-    /// that already has one, so it only actually fixes the pool the first
-    /// time an account_index is seen.
-    pub fn create_address(&self, account_index: u32, address: &str, use_ironwood: bool) -> Result<u32> {
+    /// Never pins a pool for it either - a self-healed account just keeps
+    /// auto-following the wallet's default, same as any other unpinned one.
+    pub fn create_address(&self, account_index: u32, address: &str) -> Result<u32> {
         let max_sub: Option<u32> = self
             .conn
             .query_row(
@@ -153,7 +158,6 @@ impl Bookkeeping {
              VALUES (?1, ?2, ?3, strftime('%s','now'))",
             params![account_index, sub_account, address],
         )?;
-        self.set_account_pool(account_index, use_ironwood)?;
         Ok(sub_account)
     }
 
@@ -213,31 +217,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_account_fixes_the_requested_pool() {
+    fn create_account_does_not_pin_a_pool_by_itself() {
         let bk = Bookkeeping::open_in_memory().unwrap();
-        let account_index = bk.create_account("zs1sapling...", false).unwrap();
+        let account_index = bk.create_account("zs1sapling...").unwrap();
+        assert_eq!(bk.account_pool(account_index).unwrap(), None);
+    }
+
+    #[test]
+    fn set_account_pool_pins_it_and_ignores_later_attempts_to_change_it() {
+        let bk = Bookkeeping::open_in_memory().unwrap();
+        let account_index = bk.create_account("zs1sapling...").unwrap();
+        bk.set_account_pool(account_index, false).unwrap();
+        // Simulates a later caller trying to flip an already-pinned account
+        // to Ironwood - ON CONFLICT DO NOTHING must keep it Sapling.
+        bk.set_account_pool(account_index, true).unwrap();
         assert_eq!(bk.account_pool(account_index).unwrap(), Some(false));
     }
 
     #[test]
-    fn create_address_inherits_the_account_pool_regardless_of_the_flag_passed() {
-        let bk = Bookkeeping::open_in_memory().unwrap();
-        let account_index = bk.create_account("zs1ironwood...", true).unwrap();
-        // A later create_address call always resolves use_ironwood from
-        // account_pool() before calling in; passing false here simulates a
-        // caller bug and proves set_account_pool's ON CONFLICT DO NOTHING
-        // keeps the account's real pool (true) rather than overwriting it.
-        bk.create_address(account_index, "zs1ironwood-addr2...", false)
-            .unwrap();
-        assert_eq!(bk.account_pool(account_index).unwrap(), Some(true));
-    }
-
-    #[test]
-    fn create_address_self_heals_an_unknown_account_into_the_given_pool() {
+    fn create_address_never_pins_a_pool_for_a_self_healed_account() {
         let bk = Bookkeeping::open_in_memory().unwrap();
         assert_eq!(bk.account_pool(7).unwrap(), None);
-        bk.create_address(7, "zs1selfhealed...", true).unwrap();
-        assert_eq!(bk.account_pool(7).unwrap(), Some(true));
+        bk.create_address(7, "zs1selfhealed...").unwrap();
+        // Still unpinned - callers must keep resolving the wallet's current
+        // default pool fresh for this account, forever, unless something
+        // explicitly pins it later.
+        assert_eq!(bk.account_pool(7).unwrap(), None);
     }
 
     #[test]
